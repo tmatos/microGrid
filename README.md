@@ -16,6 +16,10 @@ Para executar: `python grid.py`
 
 Para ajuda com comandos escreva, no prompt: `ajuda`.
 
+### Nós da rede
+
+Os nós pares da rede que fazem parte do grid deverão ter seus endereços IP especificados no arquivo `peerlist`.
+
 ---
 
 (C) 2014 Tiago Matos
