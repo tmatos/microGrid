@@ -1,14 +1,21 @@
 microGrid
 =========
 
-Plataforma simples para grids ad-hoc e P2P.
+Plataforma simples para deploy de grids ad-hoc e P2P em redes locais.
 
-Permite que a execução de programas com múltiplas entradas seja executada
-sobre computadores diferentes, dividindo-se essas entradas entre essas estações.
+Permite que a execução de programas portáteis com múltiplos arquivos de entradas seja distribuída sobre 
+computadores diferentes em uma rede local, dividindo-se estas entradas entre estações específicas.
 
-Para executar: python grid.py
+## Requisitos:
 
-Para ajuda com comandos escreva 'ajuda'.
+Python 2.7
+
+## Uso
+
+Para executar: `python grid.py`
+
+Para ajuda com comandos escreva, no prompt: `ajuda`.
+
+---
 
 (C) 2014 Tiago Matos
-<tiagoms88 at gmail dot com>
