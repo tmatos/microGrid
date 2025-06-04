@@ -94,7 +94,8 @@ def recepcaoThread():
             msgComDados, enderecoPar = meuSocket.recvfrom(2048)
         
             thread.start_new_thread(processaPacote, tuple([msgComDados, enderecoPar]))
-        except:
+        except Exception as e:
+            print e
             pass
 #----------------------------------------------------------------------------------------
 
@@ -102,8 +103,9 @@ def recepcaoThread():
 def contactaPares():
     try:
         arquivoPares = [line.strip() for line in open('peerlist')]
-    except:
+    except Exception as e:
         print 'Erro ao acessar o arquivo peerlist!'
+        print e
         return
 
     if len(arquivoPares) == 0:
@@ -178,8 +180,9 @@ def enviaEntrada(entrada, par):
     
     try:
         f = open(arquivo, 'rb')
-    except:
+    except Exception as e:
         print 'ERRO ao acessar o arquivo de entrada ', arquivo
+        print e
         return False
     
     tamanho = os.path.getsize(arquivo)
@@ -297,8 +300,9 @@ def carregaJob(nomeArquivo):
                 if len(entrada) > 0:
                     if entrada[0] != '#':
                         arquivoJob.append(entrada)
-        except:
+        except Exception as e:
             print 'Erro ao acessar o arquivo de job: ', nomeArquivo
+            print e
             return
             
         if len(arquivoJob) == 0:
@@ -398,8 +402,9 @@ def enviaSaida(dir, saida, par):
     
     try:
         f = open(arquivo, 'rb')
-    except:
+    except Exception as e:
         print '\nERRO ao acessar o arquivo de saida ', arquivo
+        print e
         return False
     
     tamanho = os.path.getsize(arquivo)
@@ -482,8 +487,9 @@ def conexaoTcpThread(con, par):
                 os.makedirs(diretorioJob + '/entrada')
                 os.makedirs(diretorioJob + '/saida')
                 resultado = 'ok'
-        except:
+        except Exception as e:
             resultado = 'erro'
+            print e
             
         con.send(resultado)
         
@@ -551,8 +557,9 @@ def conexaoTcpThread(con, par):
             print '\nIniciando execucao do programa ', programa
             call(['./programs/' + programa, diretorioEntrada + nomeEntrada, diretorioSaida + nomeSaida])
             resposta = 'pronto'
-        except:
+        except Exception as e:
             print '\nERRO na execucao do programa ', programa
+            print e
             resposta = 'erro'
         
         enviaSaida(nomeDiretorioJob, nomeSaida, par)
@@ -579,8 +586,9 @@ def tcpThread():
 try:
     thread.start_new_thread( tcpThread, () )
     thread.start_new_thread( recepcaoThread, () )
-except:
+except Exception as e:
     print 'Problemas com uma thread.'
+    print e
     meuSocket.close()
     exit(1)
 
