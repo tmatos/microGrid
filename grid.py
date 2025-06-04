@@ -158,9 +158,9 @@ def preparaJobNoPar(par):
     
     print ''
     
-    l = tcpSocket.recv(buff)
+    r = tcpSocket.recv(buff)
     
-    if l == 'ok':
+    if r == 'ok':
         print 'PAR ', par[0], ' esta preparado para o job ', job.nome
         job.inserePar(par)
     else:
@@ -319,7 +319,7 @@ def trataComando(stringComando):
 
     comando = stringComando.split(' ')
     
-    if comando[0] ==  'ajuda':
+    if comando[0] == 'ajuda':
         exibirAjudaDeComandos()
         
     elif comando[0] == 'contato':
@@ -443,11 +443,11 @@ def conexaoTcpThread(con, par):
     global job
     buff = 1024
     
-    l = con.recv(buff)
+    r = con.recv(buff)
     #print ''
-    #print 'TCP>', l[:200] ####### DBG
+    #print 'TCP>', r[:200] ####### DBG
     
-    cabecalho = l.split('|')
+    cabecalho = r.split('|')
     comando = cabecalho[0]
     
     if comando == 'envio':
@@ -459,13 +459,13 @@ def conexaoTcpThread(con, par):
         recebidos = 0
         
         while recebidos < tamanho:
-            l = con.recv(buff)
-            while (l):
-                recebidos += len(l)
-                f.write(l)
-                l = con.recv(buff)
+            r = con.recv(buff)
+            while (r):
+                recebidos += len(r)
+                f.write(r)
+                r = con.recv(buff)
             
-            if not l:
+            if not r:
                 break
         
         print '\nFECHANDO ARQUVIO', '- RECEBIDOS: ', recebidos
@@ -497,13 +497,13 @@ def conexaoTcpThread(con, par):
         recebidos = 0
         
         while recebidos < tamanho:
-            l = con.recv(buff)
-            while (l):
-                recebidos += len(l)
-                f.write(l)
-                l = con.recv(buff)
+            r = con.recv(buff)
+            while (r):
+                recebidos += len(r)
+                f.write(r)
+                r = con.recv(buff)
             
-            if not l:
+            if not r:
                 break
         
         print '\nFECHANDO ARQUIVO: ', diretorioEntrada + nomeEntrada, ' - RECEBIDOS: ', recebidos, ' de ', tamanho
@@ -520,13 +520,13 @@ def conexaoTcpThread(con, par):
         recebidos = 0
         
         while recebidos < tamanho:
-            l = con.recv(buff)
-            while (l):
-                recebidos += len(l)
-                f.write(l)
-                l = con.recv(buff)
+            r = con.recv(buff)
+            while (r):
+                recebidos += len(r)
+                f.write(r)
+                r = con.recv(buff)
             
-            if not l:
+            if not r:
                 break
         
         print '\nFECHANDO ARQUIVO ', diretorioSaida + nomeSaida, ' - RECEBIDOS: ', recebidos, ' de ', tamanho
@@ -558,8 +558,8 @@ def conexaoTcpThread(con, par):
         enviaSaida(nomeDiretorioJob, nomeSaida, par)
         
     else:
-        while (l):
-            l = con.recv(buff)
+        while (r):
+            r = con.recv(buff)
     
     con.close()
 #----------------------------------------------------------------------------------------
