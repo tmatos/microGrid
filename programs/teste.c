@@ -5,20 +5,20 @@ int main(int argc, char* argv[])
 {
 	int i;
 	
-	if(argc > 1)
+	if (argc > 1)
 	{
-		for(i = 0 ; i < argc; i++)
+		for (i = 0 ; i < argc ; i++)
 		{
 			printf("#%d = %s\n", i, argv[i]);
 		}
 		
-		if(argc == 2)
+		if (argc == 2)
 		{
 			printf("Testar um.\n");
-			
+
 			int a = atoi(argv[1]);
 		}
-		else if(argc == 3)
+		else if (argc == 3)
 		{
 			printf("Testar intervalo.\n");
 			
@@ -29,4 +29,3 @@ int main(int argc, char* argv[])
 	
 	return 0;
 }
-
