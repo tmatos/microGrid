@@ -3,7 +3,7 @@ Funções utilitárias diversas.
 """
 
 #----------------------------------------------------------------------------------------
-def exibirAjudaDeComandos():
+def exibir_ajuda_geral_de_comandos():
     """
     Exibe a ajuda de comandos na tela.
     """

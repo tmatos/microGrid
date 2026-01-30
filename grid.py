@@ -12,7 +12,7 @@ import sys
 
 from Job import *
 from Definicoes import *
-from Util import *
+from util import exibir_ajuda_geral_de_comandos
 
 meuSocket = socket(AF_INET, SOCK_DGRAM) # IPv4 e UDP
 meuSocket.settimeout(3)
@@ -338,7 +338,7 @@ def trataComando(stringComando):
     comando = stringComando.split(' ')
 
     if comando[0] == 'ajuda':
-        exibirAjudaDeComandos()
+        exibir_ajuda_geral_de_comandos()
     elif comando[0] == 'contato':
         contactaPares()
     elif comando[0] == 'mensagem':
