@@ -16,7 +16,7 @@ from util import exibir_ajuda_geral_de_comandos
 
 meuSocket = socket(AF_INET, SOCK_DGRAM) # IPv4 e UDP
 meuSocket.settimeout(3)
-meuSocket.bind(('', porta))
+meuSocket.bind(('', PORTA_UDP))
 
 maxDePares = 3
 listaPares = []
@@ -117,7 +117,7 @@ def contactaPares():
         print('Arquivo peerlist vazio!')
     elif len(listaPares) < len(arquivoPares) and len(listaPares) < 3:
         for enderecoPar in arquivoPares:
-            meuSocket.sendto(b'conect', (enderecoPar, portaPar))  # Send bytes
+            meuSocket.sendto(b'conect', (enderecoPar, PORTA_UDP_PAR))  # Send bytes
             print('\nTentando contactar a: ' + enderecoPar)
 #----------------------------------------------------------------------------------------
 
