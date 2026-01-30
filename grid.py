@@ -144,7 +144,7 @@ def enviarArquivo(par, arquivo):
     tcpSocket.send(cabecalho)
 
     dados = f.read(buff)
-    while (dados):
+    while dados:
         tcpSocket.send(dados)
         dados = f.read(buff)
 
@@ -203,7 +203,7 @@ def enviaEntrada(entrada, par):
         tcpSocket.connect((par[0], PORTA_TCP_PAR))
         tcpSocket.send(cabecalho)
         dados = f.read(buff)
-        while (dados):
+        while dados:
             tcpSocket.send(dados)
             dados = f.read(buff)
     except Exception as e:
@@ -431,7 +431,7 @@ def enviaSaida(dir, saida, par):
     try:
         tcpSocket.send(cabecalho)
         dados = f.read(buff)
-        while (dados):
+        while dados:
             tcpSocket.send(dados)
             dados = f.read(buff)
     except Exception as e:
@@ -470,7 +470,7 @@ def conexaoTcpThread(con, par):
         recebidos = 0
         while recebidos < tamanho:
             r = con.recv(buff)
-            while (r):
+            while r:
                 recebidos += len(r)
                 f.write(r)
                 r = con.recv(buff)
@@ -502,7 +502,7 @@ def conexaoTcpThread(con, par):
         recebidos = 0
         while recebidos < tamanho:
             r = con.recv(buff)
-            while (r):
+            while r:
                 recebidos += len(r)
                 f.write(r)
                 r = con.recv(buff)
@@ -520,7 +520,7 @@ def conexaoTcpThread(con, par):
         recebidos = 0
         while recebidos < tamanho:
             r = con.recv(buff)
-            while (r):
+            while r:
                 recebidos += len(r)
                 f.write(r)
                 r = con.recv(buff)
@@ -552,7 +552,7 @@ def conexaoTcpThread(con, par):
             resposta = 'erro'
         enviaSaida(nomeDiretorioJob, nomeSaida, par)
     else:
-        while (r):
+        while r:
             r = con.recv(buff)
 
     con.close()
