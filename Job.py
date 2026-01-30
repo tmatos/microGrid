@@ -1,3 +1,7 @@
+"""
+Modulo que implementa a classe Job e Parte para o sistema de distribuicao de tarefas.
+"""
+
 import os
 import datetime
 import threading
@@ -10,6 +14,9 @@ ATRIBUIDO = 'ATRIBUIDO'
 COMPLETO = 'COMPLETO'
 
 class Parte:
+    """
+    Representa uma parte de um job.
+    """
     estado = BRANCO
     par = None
     data = None  # data de atribuicao
@@ -17,26 +24,44 @@ class Parte:
     saida = None
 
     def is_branco(self):
+        """
+        Retorna True se a parte esta em estado BRANCO.
+        """
         return self.estado == BRANCO
 
     def is_atribuido(self):
+        """
+        Retorna True se a parte esta em estado ATRIBUIDO.
+        """
         return self.estado == ATRIBUIDO
 
     def is_completo(self):
+        """
+        Retorna True se a parte esta em estado COMPLETO.
+        """
         return self.estado == COMPLETO
 
     def atribui(self, par):
+        """
+        Atribui a parte ao par especificado.
+        """
         self.estado = ATRIBUIDO
         self.par = par
         self.data = datetime.datetime.now()
 
     def set_completo(self, saida):
+        """
+        Marca a parte como COMPLETO, definindo o nome do arquivo de saida.
+        """
         self.estado = COMPLETO
         self.saida = saida
         self.par = None
         self.data = None
 
 class Job:
+    """
+    Representa um job para processamento, composto por varias partes.
+    """
     nome = None
     programa = None
     diretorio = None
@@ -68,8 +93,10 @@ class Job:
 
         print('Job carregado com ', self.partes, ' partes.')
 
-    # True se todas tarefas estao completas, False se contrario
     def finalizado(self):
+        """
+        Retorna True se todas as partes do job estiverem completas.
+        """
         valor = True
         lock.acquire()   ### Inicio de secao critica ###
         for p in self.listaPartes:
@@ -80,10 +107,16 @@ class Job:
         return valor
 
     def inserePar(self, par):
+        """
+        Insere um par na lista de pares que participam do job.
+        """
         if par not in self.listaPares:
             self.listaPares.append(par)
 
     def removePar(self, par):
+        """
+        Remove um par da lista de pares que participam do job.
+        """
         if par in self.listaPares:
             self.listaPares.remove(par)
             if par in self.listaParOcupado:
@@ -95,8 +128,10 @@ class Job:
                             t.par = None
                             t.data = None
 
-    # Atribui uma parte do job ao par especificado
     def atribuiParteAoPar(self, parte, par):
+        """
+        Atribui uma parte do job ao par especificado        
+        """
         ok = True
         lock.acquire()   ### Inicio de secao critica ###
         if parte not in self.listaPartes:
@@ -121,12 +156,18 @@ class Job:
         lock.release()   ### Fim de secao critica ###
 
     def possuiParLivre(self):
+        """
+        Retorna True se houver algum par livre para receber uma parte.
+        """
         lock.acquire()   ### Inicio de secao critica ###
         retorno = len(self.listaParOcupado) < len(self.listaPares)
         lock.release()   ### Fim de secao critica ###
         return retorno
 
     def proximoParLivre(self):
+        """
+        Retorna o proximo par livre para receber uma parte.
+        """
         parRetorno = None
         lock.acquire()   ### Inicio de secao critica ###
         for par in self.listaPares:
@@ -136,9 +177,11 @@ class Job:
         lock.release()   ### Fim de secao critica ###
         return parRetorno
 
-    # Muda para COMPLETO o estado da parte que esta relacionada a nomeSaida
-    # e tambem retira da listaParOcupado aquele que estiver com essa parte (se existir)
-    def finalizaParte(self, nomeSaida, par):
+    def finalizaParte(self, nomeSaida, par):        
+        """
+        Muda para COMPLETO o estado da parte que esta relacionada a nomeSaida
+        e também retira da listaParOcupado aquele que estiver com essa parte (se existir).
+        """
         lock.acquire()   ### Inicio de secao critica ###
         for parte in self.listaPartes:
             if parte.entrada[:-3] == nomeSaida[:-4]:  # correspondencia entre os nomes sem as extensoes
@@ -152,8 +195,10 @@ class Job:
                     parte.set_completo(nomeSaida)
         lock.release()   ### Fim de secao critica ###
 
-    # Retorna True se um dado par esta ocupado em alguma parte do job
     def isParOcupado(self, par):
+        """
+        Retorna True se um dado par está ocupado em alguma parte do job.
+        """
         valor = False
         lock.acquire()   ### Inicio de secao critica ###
         for parOcup in self.listaParOcupado:

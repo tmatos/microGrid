@@ -1,3 +1,6 @@
+"""
+Constantes e definições usadas no programa.
+"""
 
 porta = 27950 # Nossa porta inicialmente
 portaPar = 27950 # Porta de um par...

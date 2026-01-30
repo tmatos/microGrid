@@ -1,8 +1,12 @@
-
-# util.py (funcoes utilitarias soltas)
+"""
+Funções utilitárias diversas.
+"""
 
 #----------------------------------------------------------------------------------------
 def exibirAjudaDeComandos():
+    """
+    Exibe a ajuda de comandos na tela.
+    """
     print('')
     print('Meu Grid 0.2 por Tiago Matos')
     print('')

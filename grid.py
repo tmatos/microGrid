@@ -1,3 +1,8 @@
+"""
+Módulo principal do sistema de computacao em grid.
+Contém o ponto de entrada e a lógica principal do programa.
+"""
+
 from subprocess import call
 from socket import socket, AF_INET, SOCK_DGRAM, SOCK_STREAM
 import threading
@@ -20,6 +25,9 @@ job = None
 
 #----------------------------------------------------------------------------------------
 def encerrarPrograma():
+    """
+    Encerra o programa de forma ordenada.
+    """
     print('')
     print('\nParando o programa.')
     for par in listaPares:
@@ -30,6 +38,9 @@ def encerrarPrograma():
 
 #----------------------------------------------------------------------------------------
 def processaPacote(msgComDados, enderecoPar):
+    """
+    Processa um pacote UDP recebido de um par.
+    """
     msg = msgComDados.decode('utf-8').split(';')  # Decode bytes to string
     resposta = 'void'
     if msg[0] == 'ok':
@@ -80,6 +91,9 @@ def processaPacote(msgComDados, enderecoPar):
 
 #----------------------------------------------------------------------------------------
 def recepcaoThread():
+    """
+    Thread que aguarda a recepção de pacotes UDP e os envia para o devido processamento.
+    """
     while True:
         try:
             msgComDados, enderecoPar = meuSocket.recvfrom(2048)
@@ -90,6 +104,9 @@ def recepcaoThread():
 
 #----------------------------------------------------------------------------------------
 def contactaPares():
+    """
+    Tenta contactar pares listados no arquivo 'peerlist'.
+    """
     try:
         arquivoPares = [line.strip() for line in open('peerlist')]
     except Exception as e:
@@ -106,6 +123,9 @@ def contactaPares():
 
 #----------------------------------------------------------------------------------------
 def enviarArquivo(par, arquivo):
+    """
+    Transfere via TCP um arquivo para um par.
+    """
     tcpSocket = socket(AF_INET, SOCK_STREAM)
     tcpSocket.connect((par[0], PORTA_TCP_PAR))
     f = open (arquivo, 'rb')
@@ -135,6 +155,9 @@ def enviarArquivo(par, arquivo):
 
 #----------------------------------------------------------------------------------------
 def preparaJobNoPar(par):
+    """
+    Prepara um par para receber o job carregado.
+    """
     global job
     tcpSocket = socket(AF_INET, SOCK_STREAM)
     tcpSocket.connect((par[0], PORTA_TCP_PAR))
@@ -153,6 +176,9 @@ def preparaJobNoPar(par):
 
 #-Transfere via TCP um arquivo de entrada para um par------------------------------------
 def enviaEntrada(entrada, par):
+    """
+    Transfere via TCP um arquivo de entrada para um par.
+    """
     f = None
     arquivo = './jobs/' + job.diretorio + '/entrada/' + entrada
 
@@ -196,6 +222,9 @@ def enviaEntrada(entrada, par):
 
 #-Envia um comando para o par executar uma parte do job----------------------------------
 def executaParteNoPar(parte, par):
+    """
+    Envia um comando para o par executar uma parte do job.
+    """
     tcpSocket = socket(AF_INET, SOCK_STREAM)
 
     # Formato: executa|programa|diretorio_job|nome_entrada|
@@ -210,6 +239,9 @@ def executaParteNoPar(parte, par):
 
 #-Thread que cuida da divisao e execucao das partes do job nos pares---------------------
 def jobThread():
+    """
+    Thread que cuida da divisao e execucao das partes do job nos pares.
+    """
     global job
 
     if len(listaPares) == 0:
@@ -243,6 +275,9 @@ def jobThread():
 
 #-Inicia a execucao do job---------------------------------------------------------------
 def executaJob():
+    """
+    Inicia a execucao do job carregado na memoria.
+    """
     global job
 
     if not job:
@@ -264,6 +299,9 @@ def executaJob():
 
 #-Carrega para a memoria o job descrito pelo arquivo-------------------------------------
 def carregaJob(nomeArquivo):
+    """
+    Carrega um job a partir do arquivo especificado.
+    """
     global job
     arquivoJob = []
 
@@ -291,6 +329,9 @@ def carregaJob(nomeArquivo):
 
 #-Interpretacao dos comandos do prompt---------------------------------------------------
 def trataComando(stringComando):
+    """
+    Interpreta e executa os comandos digitados no prompt.
+    """
     if len(stringComando) == 0:
         return
 
@@ -359,6 +400,10 @@ def trataComando(stringComando):
 
 #-Transf. via TCP, o result. do process. e arquivo de saida (se houver) para um par------
 def enviaSaida(dir, saida, par):
+    """
+    Transfere via TCP resultados sobre o processamento e o arquivo de saida (caso haja)
+    gerado por um job para um determinado par.
+    """
     f = None
 
     arquivo = './temp/' + dir + '/saida/' + saida
@@ -405,6 +450,9 @@ def enviaSaida(dir, saida, par):
 
 #-Thread da conexao criada numa interacao com um par-------------------------------------
 def conexaoTcpThread(con, par):
+    """
+    Thread que cuida de uma conexao TCP com um par.
+    """
     global job
     buff = 1024
 
@@ -512,6 +560,9 @@ def conexaoTcpThread(con, par):
 
 #-Thread do socket de boas-vindas do tcp-------------------------------------------------
 def tcpThread():
+    """
+    Thread que aguarda conexoes TCP de pares.
+    """
     s = socket(AF_INET, SOCK_STREAM)
     s.bind(('', PORTA_TCP))
     s.listen(10)
