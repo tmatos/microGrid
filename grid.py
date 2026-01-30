@@ -11,7 +11,7 @@ import os
 import sys
 
 from Job import *
-from Definicoes import *
+from definicoes import PORTA_UDP, PORTA_UDP_PAR, PORTA_TCP, PORTA_TCP_PAR
 from util import exibir_ajuda_geral_de_comandos
 
 meuSocket = socket(AF_INET, SOCK_DGRAM) # IPv4 e UDP
