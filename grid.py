@@ -14,56 +14,56 @@ from Job import *
 from definicoes import PORTA_UDP, PORTA_UDP_PAR, PORTA_TCP, PORTA_TCP_PAR
 from util import exibir_ajuda_geral_de_comandos
 
-meuSocket = socket(AF_INET, SOCK_DGRAM) # IPv4 e UDP
-meuSocket.settimeout(3)
-meuSocket.bind(('', PORTA_UDP))
+meu_socket_udp = socket(AF_INET, SOCK_DGRAM) # IPv4 e UDP
+meu_socket_udp.settimeout(3)
+meu_socket_udp.bind(('', PORTA_UDP))
 
-maxDePares = 3
-listaPares = []
+MAX_DE_PARES = 3
+lista_pares = []
 
 job = None
 
 #----------------------------------------------------------------------------------------
-def encerrarPrograma():
+def encerrar_programa():
     """
     Encerra o programa de forma ordenada.
     """
     print('')
     print('\nParando o programa.')
-    for par in listaPares:
-        meuSocket.sendto('disconect', par)
-    meuSocket.close()
+    for par in lista_pares:
+        meu_socket_udp.sendto('disconect', par)
+    meu_socket_udp.close()
     sys.exit(0)
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
-def processaPacote(msgComDados, enderecoPar):
+def processa_pacote(msg_com_dados, endereco_par):
     """
     Processa um pacote UDP recebido de um par.
     """
-    msg = msgComDados.decode('utf-8').split(';')  # Decode bytes to string
+    msg = msg_com_dados.decode('utf-8').split(';')  # Decode bytes to string
     resposta = 'void'
     if msg[0] == 'ok':
         if msg[1] == 'contact':
-            if len(listaPares) < maxDePares:
-                if enderecoPar not in listaPares:
-                    listaPares.append(enderecoPar)
-                    print(f'\nNosso pedido de contato foi aceito por {str(enderecoPar)}')
+            if len(lista_pares) < MAX_DE_PARES:
+                if endereco_par not in lista_pares:
+                    lista_pares.append(endereco_par)
+                    print(f'\nNosso pedido de contato foi aceito por {str(endereco_par)}')
             else:
                 resposta = 'disconect'
     elif msg[0] == 'conect':
-        if len(listaPares) < maxDePares:
-            if enderecoPar not in listaPares:
-                listaPares.append(enderecoPar)
+        if len(lista_pares) < MAX_DE_PARES:
+            if endereco_par not in lista_pares:
+                lista_pares.append(endereco_par)
             resposta = 'ok;contact'
-            print(f'\nPedido de contato aceito originado de {str(enderecoPar)}')
+            print(f'\nPedido de contato aceito originado de {str(endereco_par)}')
         else:
             resposta = 'not'
     elif msg[0] == 'disconect':
-        if enderecoPar in listaPares:
-            listaPares.remove(enderecoPar)
-            print(f'Contato desfeito por solicitacao de {str(enderecoPar)}')
-    elif enderecoPar in listaPares:
+        if endereco_par in lista_pares:
+            lista_pares.remove(endereco_par)
+            print(f'Contato desfeito por solicitacao de {str(endereco_par)}')
+    elif endereco_par in lista_pares:
         if msg[0] == 'do':
             resposta = 'what?'
             if len(msg) > 3:
@@ -74,7 +74,7 @@ def processaPacote(msgComDados, enderecoPar):
                     except Exception:  # Changed to catch all exceptions
                         resposta = 'erro cmd'
         elif msg[0] == 'msg':
-            msg_print = 'Msg. de ' + str(enderecoPar) + ' : '
+            msg_print = 'Msg. de ' + str(endereco_par) + ' : '
             if len(msg) > 1:
                 msg_print += msg[1]
             print('')
@@ -84,51 +84,51 @@ def processaPacote(msgComDados, enderecoPar):
         resposta = 'not'
 
     if resposta != 'void':
-        meuSocket.sendto(resposta.encode('utf-8'), enderecoPar)  # Encode string to bytes
+        meu_socket_udp.sendto(resposta.encode('utf-8'), endereco_par)  # Encode string to bytes
         #print('')
         #print('Enviei: ', resposta, '  Para: ', str(enderecoPar))
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
-def recepcaoThread():
+def recepcao_thread():
     """
     Thread que aguarda a recepção de pacotes UDP e os envia para o devido processamento.
     """
     while True:
         try:
-            msgComDados, enderecoPar = meuSocket.recvfrom(2048)
-            threading.Thread(target=processaPacote, args=(msgComDados, enderecoPar)).start()
-        except Exception as e:
-            print(e)
+            msg_com_dados, endereco_par = meu_socket_udp.recvfrom(2048)
+            threading.Thread(target=processa_pacote, args=(msg_com_dados, endereco_par)).start()
+        except Exception as ex:
+            print(ex)
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
-def contactaPares():
+def contacta_pares():
     """
     Tenta contactar pares listados no arquivo 'peerlist'.
     """
     try:
-        arquivoPares = [line.strip() for line in open('peerlist')]
-    except Exception as e:
+        arquivo_pares = [line.strip() for line in open('peerlist')]
+    except Exception as ex:
         print('Erro ao acessar o arquivo peerlist!')
-        print(e)
+        print(ex)
         return
-    if len(arquivoPares) == 0:
+    if len(arquivo_pares) == 0:
         print('Arquivo peerlist vazio!')
-    elif len(listaPares) < len(arquivoPares) and len(listaPares) < 3:
-        for enderecoPar in arquivoPares:
-            meuSocket.sendto(b'conect', (enderecoPar, PORTA_UDP_PAR))  # Send bytes
-            print('\nTentando contactar a: ' + enderecoPar)
+    elif len(lista_pares) < len(arquivo_pares) and len(lista_pares) < 3:
+        for endereco_par in arquivo_pares:
+            meu_socket_udp.sendto(b'conect', (endereco_par, PORTA_UDP_PAR))  # Send bytes
+            print('\nTentando contactar a: ' + endereco_par)
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
-def enviarArquivo(par, arquivo):
+def enviar_arquivo(par, arquivo):
     """
     Transfere via TCP um arquivo para um par.
     """
-    tcpSocket = socket(AF_INET, SOCK_STREAM)
-    tcpSocket.connect((par[0], PORTA_TCP_PAR))
-    f = open (arquivo, 'rb')
+    tcp_socket = socket(AF_INET, SOCK_STREAM)
+    tcp_socket.connect((par[0], PORTA_TCP_PAR))
+    file = open (arquivo, 'rb')
     buff = 1024
     arquivo = arquivo.replace('\\', '/')
     nome = arquivo.split('/')[-1]
@@ -141,57 +141,57 @@ def enviarArquivo(par, arquivo):
 
     print('ENVIANDO: ', arquivo, ' de ', tamanho)
 
-    tcpSocket.send(cabecalho)
+    tcp_socket.send(cabecalho)
 
-    dados = f.read(buff)
+    dados = file.read(buff)
     while dados:
-        tcpSocket.send(dados)
-        dados = f.read(buff)
+        tcp_socket.send(dados)
+        dados = file.read(buff)
 
-    tcpSocket.close()
-    f.close()
+    tcp_socket.close()
+    file.close()
     print('FIM DO ENVIO DE: ', arquivo)
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
-def preparaJobNoPar(par):
+def prepara_job_no_par(par):
     """
     Prepara um par para receber o job carregado.
     """
     global job
-    tcpSocket = socket(AF_INET, SOCK_STREAM)
-    tcpSocket.connect((par[0], PORTA_TCP_PAR))
-    tcpSocket.sendall(f'job|{job.diretorio}|'.encode('utf-8'))
+    tcp_socket = socket(AF_INET, SOCK_STREAM)
+    tcp_socket.connect((par[0], PORTA_TCP_PAR))
+    tcp_socket.sendall(f'job|{job.diretorio}|'.encode('utf-8'))
     buff = 1024
     print('')
-    r = tcpSocket.recv(buff).decode('utf-8')
-    if r == 'ok':
+    resp = tcp_socket.recv(buff).decode('utf-8')
+    if resp == 'ok':
         print(f'PAR {par[0]} esta preparado para o job {job.nome}')
-        job.inserePar(par)
+        job.insere_par(par)
     else:
         print(f'PAR {par[0]} nao pode preparar (ou nao e possivel confirmar) para o job {job.nome}')
-        job.removePar(par)
-    tcpSocket.close()
+        job.remove_par(par)
+    tcp_socket.close()
 #----------------------------------------------------------------------------------------
 
 #-Transfere via TCP um arquivo de entrada para um par------------------------------------
-def enviaEntrada(entrada, par):
+def envia_entrada(entrada, par):
     """
     Transfere via TCP um arquivo de entrada para um par.
     """
-    f = None
+    file = None
     arquivo = './jobs/' + job.diretorio + '/entrada/' + entrada
 
     try:
-        f = open(arquivo, 'rb')
-    except Exception as e:
+        file = open(arquivo, 'rb')
+    except Exception as ex:
         print('ERRO ao acessar o arquivo de entrada ', arquivo)
-        print(e)
+        print(ex)
         return False
 
     tamanho = os.path.getsize(arquivo)
     buff = 1024
-    tcpSocket = socket(AF_INET, SOCK_STREAM)
+    tcp_socket = socket(AF_INET, SOCK_STREAM)
     cabecalho = 'entrada|' + job.diretorio + '|' + entrada + '|' + str(tamanho) + '|' # entrada|diretorio_job|nome_entrada|tamanho|
 
     # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
@@ -200,81 +200,81 @@ def enviaEntrada(entrada, par):
 
     try:
         print('ENVIANDO ENTRADA: ', arquivo, ' de ', tamanho)
-        tcpSocket.connect((par[0], PORTA_TCP_PAR))
-        tcpSocket.send(cabecalho)
-        dados = f.read(buff)
+        tcp_socket.connect((par[0], PORTA_TCP_PAR))
+        tcp_socket.send(cabecalho)
+        dados = file.read(buff)
         while dados:
-            tcpSocket.send(dados)
-            dados = f.read(buff)
-    except Exception as e:
+            tcp_socket.send(dados)
+            dados = file.read(buff)
+    except Exception as ex:
         print('\nHouve um erro na tranf. de um arquivo!')
-        print(e)
-        tcpSocket.close()
-        f.close()
+        print(ex)
+        tcp_socket.close()
+        file.close()
         return False
 
-    tcpSocket.close()
-    f.close()
+    tcp_socket.close()
+    file.close()
 
     print('FIM DO ENVIO DE: ', arquivo)
     return True
 #----------------------------------------------------------------------------------------
 
 #-Envia um comando para o par executar uma parte do job----------------------------------
-def executaParteNoPar(parte, par):
+def executa_parte_no_par(parte, par):
     """
     Envia um comando para o par executar uma parte do job.
     """
-    tcpSocket = socket(AF_INET, SOCK_STREAM)
+    tcp_socket = socket(AF_INET, SOCK_STREAM)
 
     # Formato: executa|programa|diretorio_job|nome_entrada|
     msg = 'executa|' + job.programa + '|' + job.diretorio + '|' + parte.entrada + '|'
 
     print('EXECUTANDO: ', job.programa, ' sobre a entrada ', parte.entrada, ' em ', par)
 
-    tcpSocket.connect((par[0], PORTA_TCP_PAR))
-    tcpSocket.send(msg)
-    tcpSocket.close()
+    tcp_socket.connect((par[0], PORTA_TCP_PAR))
+    tcp_socket.send(msg)
+    tcp_socket.close()
 #----------------------------------------------------------------------------------------
 
 #-Thread que cuida da divisao e execucao das partes do job nos pares---------------------
-def jobThread():
+def job_thread():
     """
     Thread que cuida da divisao e execucao das partes do job nos pares.
     """
     global job
 
-    if len(listaPares) == 0:
+    if len(lista_pares) == 0:
         print('\nSem contato de pares para compartilhar o processamento.')
         return
 
     # esse loop tambem popula a lista job.listaPares com os pares prontos
-    for par in listaPares:
-        preparaJobNoPar(par)
+    for par in lista_pares:
+        prepara_job_no_par(par)
 
-    if len(job.listaPares) == 0:
+    if len(job.lista_pares) == 0:
         print('\nNenhum par ficou pronto para o processamento.')
         return
 
     while not job.finalizado():
-        if job.possuiParLivre():
-            for parte in job.listaPartes:
+        if job.possui_par_livre():
+            for parte in job.lista_partes:
                 print(parte.estado, parte.entrada)
                 if parte.is_branco():
-                    parLivre = job.proximoParLivre()
-                    if parLivre is None:
+                    par_livre = job.proximo_par_livre()
+                    if par_livre is None:
                         break
-                    if not enviaEntrada(parte.entrada, parLivre):
+                    if not envia_entrada(parte.entrada, par_livre):
                         break
-                    job.atribuiParteAoPar(parte, parLivre)
-                    executaParteNoPar(parte, parLivre)
+                    job.atribui_parte_ao_par(parte, par_livre)
+                    executa_parte_no_par(parte, par_livre)
         time.sleep(0.7) # Estimar com experimentos qual o melhor valor...
 
     print('\nSUCESSO. O job foi concluido.')
 #----------------------------------------------------------------------------------------
 
 #-Inicia a execucao do job---------------------------------------------------------------
-def executaJob():
+def executa_job():
     """
     Inicia a execucao do job carregado na memoria.
     """
@@ -283,99 +283,99 @@ def executaJob():
     if not job:
         print('\nNenhum job carregado.')
         return
-    if len(job.listaPartes) == 0:
+    if len(job.lista_partes) == 0:
         print('\nJob sem tarefas.')
         return
     if job.finalizado():
         print(f'\nTodas as tarefas do job \'{job.nome}\' foram completas.')
         return
 
-    for parte in job.listaPartes:
+    for parte in job.lista_partes:
         if parte.is_branco():
             print('PARTE: ', parte.entrada, ' EM BRANCO')
 
-    threading.Thread(target=jobThread, args=()).start()
+    threading.Thread(target=job_thread, args=()).start()
 #----------------------------------------------------------------------------------------
 
 #-Carrega para a memoria o job descrito pelo arquivo-------------------------------------
-def carregaJob(nomeArquivo):
+def carrega_job(nome_arquivo):
     """
     Carrega um job a partir do arquivo especificado.
     """
     global job
-    arquivoJob = []
+    arquivo_job = []
 
     try:
-        for line in open('jobs/' + nomeArquivo):
+        for line in open('jobs/' + nome_arquivo):
             entrada = line.strip()
             if len(entrada) > 0:
                 if entrada[0] != '#':
-                    arquivoJob.append(entrada)
-    except Exception as e:
-        print(f'Erro ao acessar o arquivo de job: {nomeArquivo}')
-        print(e)
+                    arquivo_job.append(entrada)
+    except Exception as ex:
+        print(f'Erro ao acessar o arquivo de job: {nome_arquivo}')
+        print(ex)
         return
 
-    if len(arquivoJob) == 0:
-        print(f'Arquivo de job {nomeArquivo} está vazio.')
+    if len(arquivo_job) == 0:
+        print(f'Arquivo de job {nome_arquivo} está vazio.')
         return
 
-    if len(arquivoJob) < 3:
-        print(f'Arquivo de job {nomeArquivo} faltando parâmetros.')
+    if len(arquivo_job) < 3:
+        print(f'Arquivo de job {nome_arquivo} faltando parâmetros.')
         return
 
-    job = Job(arquivoJob[0], arquivoJob[1], arquivoJob[2], nomeArquivo)
+    job = Job(arquivo_job[0], arquivo_job[1], arquivo_job[2], nome_arquivo)
 #----------------------------------------------------------------------------------------
 
 #-Interpretacao dos comandos do prompt---------------------------------------------------
-def trataComando(stringComando):
+def trata_comando(string_comando):
     """
     Interpreta e executa os comandos digitados no prompt.
     """
-    if len(stringComando) == 0:
+    if len(string_comando) == 0:
         return
 
-    comando = stringComando.split(' ')
+    comando = string_comando.split(' ')
 
     if comando[0] == 'ajuda':
         exibir_ajuda_geral_de_comandos()
     elif comando[0] == 'contato':
-        contactaPares()
+        contacta_pares()
     elif comando[0] == 'mensagem':
         if len(comando) < 3:
             print('\nArgumentos incorretos no comando.')
         else:
             try:
-                idPar = int(comando[1])
+                id_par = int(comando[1])
             except ValueError:
                 print('\nArgumentos incorretos no comando. Id do par deve ser numero.')
                 return
 
-            if idPar < 0 or idPar+1 > len(listaPares):
+            if id_par < 0 or id_par+1 > len(lista_pares):
                 print('\nNao temos este par na nossa lista.')
             else:
-                msgConteudo = ''
-                for s in comando[2:]:
-                    msgConteudo += s + ' '
-                meuSocket.sendto('msg;' + msgConteudo, listaPares[idPar])
+                msg_conteudo = ''
+                for char in comando[2:]:
+                    msg_conteudo += char + ' '
+                meu_socket_udp.sendto('msg;' + msg_conteudo, lista_pares[id_par])
     elif comando[0] == 'enviar':
         if len(comando) < 3:
             print('\nArgumentos incorretos no comando.')
         else:
             try:
-                idPar = int(comando[1])
+                id_par = int(comando[1])
             except ValueError:
                 print('\nArgumentos incorretos no comando. Id do par deve ser numero.')
                 return
 
-            if idPar < 0 or idPar+1 > len(listaPares):
+            if id_par < 0 or id_par+1 > len(lista_pares):
                 print('\nNao temos este par na nossa lista.')
 
-            enviarArquivo(listaPares[idPar], comando[2])
+            enviar_arquivo(lista_pares[id_par], comando[2])
     elif comando[0] == 'pares':
         i = 0
-        for par in listaPares:
-            print('#', i, ' - ', str(par), ' - Ocup.:', job.isParOcupado(par) if job is not None else False)
+        for par in lista_pares:
+            print('#', i, ' - ', str(par), ' - Ocup.:', job.is_par_ocupado(par) if job is not None else False)
             i = i + 1
         if i == 0:
             print('Sem pares contactados.')
@@ -383,41 +383,41 @@ def trataComando(stringComando):
         if len(comando) < 2:
             print('\nArgumentos incorretos. Especifique o arquivo do job.')
             return
-        carregaJob(comando[1])
+        carrega_job(comando[1])
     elif comando[0] == 'estado':
         if job is None:
             print('Sem job carregado.')
         else:
-            for parte in job.listaPartes:
+            for parte in job.lista_partes:
                 print('#', parte.entrada, '-', parte.estado)
     elif comando[0] == 'executa':
-        executaJob()
+        executa_job()
     elif comando[0] == 'sair':
-        encerrarPrograma()
+        encerrar_programa()
     else:
         print('Comando nao reconhecido.')
 #----------------------------------------------------------------------------------------
 
 #-Transf. via TCP, o result. do process. e arquivo de saida (se houver) para um par------
-def enviaSaida(dir, saida, par):
+def envia_saida(dir, saida, par):
     """
     Transfere via TCP resultados sobre o processamento e o arquivo de saida (caso haja)
     gerado por um job para um determinado par.
     """
-    f = None
+    file = None
 
     arquivo = './temp/' + dir + '/saida/' + saida
 
     try:
-        f = open(arquivo, 'rb')
-    except Exception as e:
+        file = open(arquivo, 'rb')
+    except Exception as ex:
         print(f'\nERRO ao acessar o arquivo de saida {arquivo}')
-        print(e)
+        print(ex)
         return False
 
     tamanho = os.path.getsize(arquivo)
     buff = 1024
-    tcpSocket = socket(AF_INET, SOCK_STREAM)
+    tcp_socket = socket(AF_INET, SOCK_STREAM)
     cabecalho = 'saida|' + dir + '|' + saida + '|' + str(tamanho) + '|' # saida|diretorio_job|nome_saida|tamanho|
 
     # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
@@ -426,159 +426,159 @@ def enviaSaida(dir, saida, par):
 
     print(f'\nENVIANDO SAIDA: {arquivo} de {tamanho}')
 
-    tcpSocket.connect((par[0], PORTA_TCP_PAR))
+    tcp_socket.connect((par[0], PORTA_TCP_PAR))
 
     try:
-        tcpSocket.send(cabecalho)
-        dados = f.read(buff)
+        tcp_socket.send(cabecalho)
+        dados = file.read(buff)
         while dados:
-            tcpSocket.send(dados)
-            dados = f.read(buff)
-    except Exception as e:
+            tcp_socket.send(dados)
+            dados = file.read(buff)
+    except Exception as ex:
         print('\nHouve um erro na transf. de um arquivo!')
-        print(e)
-        tcpSocket.close()
-        f.close()
+        print(ex)
+        tcp_socket.close()
+        file.close()
         return False
 
-    tcpSocket.close()
-    f.close()
+    tcp_socket.close()
+    file.close()
 
     print(f'\nFIM DO ENVIO DE: {arquivo}')
     return True
 #----------------------------------------------------------------------------------------
 
 #-Thread da conexao criada numa interacao com um par-------------------------------------
-def conexaoTcpThread(con, par):
+def conexao_tcp_thread(con, par):
     """
     Thread que cuida de uma conexao TCP com um par.
     """
     global job
     buff = 1024
 
-    r = con.recv(buff)
+    resp = con.recv(buff)
     #print ''
     #print 'TCP>', r[:200] ####### DBG
 
-    cabecalho = r.split('|')
+    cabecalho = resp.split('|')
     comando = cabecalho[0]
 
     if comando == 'envio':
         nome = cabecalho[1]
         tamanho = int(cabecalho[2])
-        f = open('./recebidos/' + nome, 'wb+')
+        file = open('./recebidos/' + nome, 'wb+')
         recebidos = 0
         while recebidos < tamanho:
-            r = con.recv(buff)
-            while r:
-                recebidos += len(r)
-                f.write(r)
-                r = con.recv(buff)
-            if not r:
+            resp = con.recv(buff)
+            while resp:
+                recebidos += len(resp)
+                file.write(resp)
+                resp = con.recv(buff)
+            if not resp:
                 break
         print('\nFECHANDO ARQUVIO', '- RECEBIDOS: ', recebidos)
-        f.close()
+        file.close()
     elif comando == 'job':
-        diretorioJob = './temp/' + cabecalho[1]
+        diretorio_job = './temp/' + cabecalho[1]
         resultado = ''
 
         try:
-            if os.path.isdir(diretorioJob):
+            if os.path.isdir(diretorio_job):
                 resultado = 'ok'
             else:
-                os.makedirs(diretorioJob + '/entrada')
-                os.makedirs(diretorioJob + '/saida')
+                os.makedirs(diretorio_job + '/entrada')
+                os.makedirs(diretorio_job + '/saida')
                 resultado = 'ok'
-        except Exception as e:
+        except Exception as ex:
             resultado = 'erro'
-            print(e)
+            print(ex)
 
         con.send(resultado)
     elif comando == 'entrada':
-        diretorioEntrada = './temp/' + cabecalho[1] + '/entrada/'
-        nomeEntrada = cabecalho[2]
+        diretorio_entrada = './temp/' + cabecalho[1] + '/entrada/'
+        nome_entrada = cabecalho[2]
         tamanho = int(cabecalho[3])
-        f = open(diretorioEntrada + nomeEntrada, 'wb+')
+        file = open(diretorio_entrada + nome_entrada, 'wb+')
         recebidos = 0
         while recebidos < tamanho:
-            r = con.recv(buff)
-            while r:
-                recebidos += len(r)
-                f.write(r)
-                r = con.recv(buff)
-            if not r:
+            resp = con.recv(buff)
+            while resp:
+                recebidos += len(resp)
+                file.write(resp)
+                resp = con.recv(buff)
+            if not resp:
                 break
 
-        print('\nFECHANDO ARQUIVO: ', diretorioEntrada + nomeEntrada, ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
-        f.close()
+        print('\nFECHANDO ARQUIVO: ', diretorio_entrada + nome_entrada, ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
+        file.close()
     elif comando == 'saida':   # Formato: saida|diretorio_job|nome_saida|tamanho|
-        nomeDiretorio = cabecalho[1]
-        diretorioSaida = './jobs/' + nomeDiretorio + '/saida/'
-        nomeSaida = cabecalho[2]
+        nome_diretorio = cabecalho[1]
+        diretorio_saida = './jobs/' + nome_diretorio + '/saida/'
+        nome_saida = cabecalho[2]
         tamanho = int(cabecalho[3])
-        f = open(diretorioSaida + nomeSaida, 'wb+')
+        file = open(diretorio_saida + nome_saida, 'wb+')
         recebidos = 0
         while recebidos < tamanho:
-            r = con.recv(buff)
-            while r:
-                recebidos += len(r)
-                f.write(r)
-                r = con.recv(buff)
-            if not r:
+            resp = con.recv(buff)
+            while resp:
+                recebidos += len(resp)
+                file.write(resp)
+                resp = con.recv(buff)
+            if not resp:
                 break
 
-        print('\nFECHANDO ARQUIVO ', diretorioSaida + nomeSaida, ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
-        f.close()
+        print('\nFECHANDO ARQUIVO ', diretorio_saida + nome_saida, ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
+        file.close()
 
         # esta parte eh muito importante, nela mudamos o estado de uma tarefa concorrentemente
-        if job.diretorio == nomeDiretorio:
-            job.finalizaParte(nomeSaida, par)
+        if job.diretorio == nome_diretorio:
+            job.finaliza_parte(nome_saida, par)
     elif comando == 'executa':  # Formato da msg: executa|programa|diretorio_job|nome_entrada|remetente
         programa = cabecalho[1]
-        nomeDiretorioJob = cabecalho[2]
-        diretorioEntrada = './temp/' + nomeDiretorioJob + '/entrada/'
-        diretorioSaida = './temp/' + nomeDiretorioJob + '/saida/'
-        nomeEntrada = cabecalho[3]
-        nomeSaida = nomeEntrada[0:-3] + '.out'
+        nome_diretorio_job = cabecalho[2]
+        diretorio_entrada = './temp/' + nome_diretorio_job + '/entrada/'
+        diretorio_saida = './temp/' + nome_diretorio_job + '/saida/'
+        nome_entrada = cabecalho[3]
+        nome_saida = nome_entrada[0:-3] + '.out'
         remetente = par[0]
         resposta = ''
         try:
             print(f'\nIniciando execucao do programa {programa}')
-            call(['./programs/' + programa, diretorioEntrada + nomeEntrada, diretorioSaida + nomeSaida])
+            call(['./programs/' + programa, diretorio_entrada + nome_entrada, diretorio_saida + nome_saida])
             resposta = 'pronto'
-        except Exception as e:
+        except Exception as ex:
             print(f'\nERRO na execucao do programa {programa}')
-            print(e)
+            print(ex)
             resposta = 'erro'
-        enviaSaida(nomeDiretorioJob, nomeSaida, par)
+        envia_saida(nome_diretorio_job, nome_saida, par)
     else:
-        while r:
-            r = con.recv(buff)
+        while resp:
+            resp = con.recv(buff)
 
     con.close()
 #----------------------------------------------------------------------------------------
 
 #-Thread do socket de boas-vindas do tcp-------------------------------------------------
-def tcpThread():
+def tcp_thread():
     """
     Thread que aguarda conexoes TCP de pares.
     """
-    s = socket(AF_INET, SOCK_STREAM)
-    s.bind(('', PORTA_TCP))
-    s.listen(10)
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.bind(('', PORTA_TCP))
+    sock.listen(10)
     while True:
-        con, par = s.accept()
-        threading.Thread(target=conexaoTcpThread, args=tuple([con, par])).start()
+        con, par = sock.accept()
+        threading.Thread(target=conexao_tcp_thread, args=tuple([con, par])).start()
 #----------------------------------------------------------------------------------------
 
 #-Inicializacao das threads--------------------------------------------------------------
 try:
-    threading.Thread(target=tcpThread, args=()).start()
-    threading.Thread(target=recepcaoThread, args=()).start()
-except Exception as e:
+    threading.Thread(target=tcp_thread, args=()).start()
+    threading.Thread(target=recepcao_thread, args=()).start()
+except Exception as ex:
     print('Problemas com uma thread.')
-    print(e)
-    meuSocket.close()
+    print(ex)
+    meu_socket_udp.close()
     sys.exit(1)
 
 print('Pronto.')
@@ -589,10 +589,10 @@ print('')
 while True:
     try:
         comando = input('Comando: ')
-        trataComando(comando)
+        trata_comando(comando)
     except KeyboardInterrupt:
-        encerrarPrograma()
-    except Exception as e:
+        encerrar_programa()
+    except Exception as ex:
         print('\nHouve um erro!')
-        print(e)
+        print(ex)
 #----------------------------------------------------------------------------------------
