@@ -158,7 +158,6 @@ def prepara_job_no_par(par):
     """
     Prepara um par para receber o job carregado.
     """
-    global job
     tcp_socket = socket(AF_INET, SOCK_STREAM)
     tcp_socket.connect((par[0], PORTA_TCP_PAR))
     tcp_socket.sendall(f'job|{job.diretorio}|'.encode('utf-8'))
@@ -242,13 +241,12 @@ def job_thread():
     """
     Thread que cuida da divisao e execucao das partes do job nos pares.
     """
-    global job
 
     if len(lista_pares) == 0:
         print('\nSem contato de pares para compartilhar o processamento.')
         return
 
-    # esse loop tambem popula a lista job.listaPares com os pares prontos
+    # esse loop tambem popula a lista job.lista_pares com os pares prontos
     for par in lista_pares:
         prepara_job_no_par(par)
 
@@ -278,8 +276,6 @@ def executa_job():
     """
     Inicia a execucao do job carregado na memoria.
     """
-    global job
-
     if not job:
         print('\nNenhum job carregado.')
         return
@@ -455,9 +451,7 @@ def conexao_tcp_thread(con, par):
     """
     Thread que cuida de uma conexao TCP com um par.
     """
-    global job
     buff = 1024
-
     resp = con.recv(buff)
     #print ''
     #print 'TCP>', r[:200] ####### DBG
