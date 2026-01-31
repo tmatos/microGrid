@@ -401,14 +401,14 @@ def envia_mensagem(id_par : int, textos : list):
 #----------------------------------------------------------------------------------------
 
 #-Transf. via TCP, o result. do process. e arquivo de saida (se houver) para um par------
-def envia_saida(dir, saida, par):
+def envia_saida(diretorio, saida, par):
     """
     Transfere via TCP resultados sobre o processamento e o arquivo de saida (caso haja)
     gerado por um job para um determinado par.
     """
     file = None
 
-    arquivo = './temp/' + dir + '/saida/' + saida
+    arquivo = './temp/' + diretorio + '/saida/' + saida
 
     try:
         file = open(arquivo, 'rb')
@@ -420,7 +420,7 @@ def envia_saida(dir, saida, par):
     tamanho = os.path.getsize(arquivo)
     buff = 1024
     tcp_socket = socket(AF_INET, SOCK_STREAM)
-    cabecalho = 'saida|' + dir + '|' + saida + '|' + str(tamanho) + '|' # saida|diretorio_job|nome_saida|tamanho|
+    cabecalho = 'saida|' + diretorio + '|' + saida + '|' + str(tamanho) + '|' # saida|diretorio_job|nome_saida|tamanho|
 
     # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
     # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
@@ -542,8 +542,6 @@ def conexao_tcp_thread(con, par):
         diretorio_saida = './temp/' + nome_diretorio_job + '/saida/'
         nome_entrada = cabecalho[3]
         nome_saida = nome_entrada[0:-3] + '.out'
-        remetente = par[0]
-        resposta = ''
         try:
             print(f'\nIniciando execucao do programa {programa}')
             call(['./programs/' + programa, diretorio_entrada + nome_entrada, diretorio_saida + nome_saida])
@@ -590,8 +588,8 @@ print('')
 #-Loop principal, usado para entrada de comandos-----------------------------------------
 while True:
     try:
-        comando = input('Comando: ')
-        trata_comando(comando)
+        str_comando = input('Comando: ')
+        trata_comando(str_comando)
     except KeyboardInterrupt:
         encerrar_programa()
     except Exception as ex:
