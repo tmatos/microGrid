@@ -350,14 +350,7 @@ def trata_comando(string_comando):
             except ValueError:
                 print('\nArgumentos incorretos no comando. Id do par deve ser numero.')
                 return
-
-            if id_par < 0 or id_par+1 > len(lista_pares):
-                print('\nNao temos este par na nossa lista.')
-            else:
-                msg_conteudo = ''
-                for char in comando[2:]:
-                    msg_conteudo += char + ' '
-                meu_socket_udp.sendto('msg;' + msg_conteudo, lista_pares[id_par])
+            envia_mensagem(id_par, comando[2:])
     elif comando[0] == 'enviar':
         if len(comando) < 3:
             print('\nArgumentos incorretos no comando.')
@@ -367,10 +360,8 @@ def trata_comando(string_comando):
             except ValueError:
                 print('\nArgumentos incorretos no comando. Id do par deve ser numero.')
                 return
-
             if id_par < 0 or id_par+1 > len(lista_pares):
                 print('\nNao temos este par na nossa lista.')
-
             enviar_arquivo(lista_pares[id_par], comando[2])
     elif comando[0] == 'pares':
         i = 0
@@ -395,6 +386,18 @@ def trata_comando(string_comando):
         encerrar_programa()
     else:
         print('Comando nao reconhecido.')
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def envia_mensagem(id_par : int, textos : list):
+    """
+    Envia uma mensagem de texto, via UDP, para um par com determinado id.
+    """
+    if id_par < 0 or id_par+1 > len(lista_pares):
+        print('\nNao temos este par na nossa lista.')
+        return
+    mensagem = 'msg:' + ' '.join(textos)
+    meu_socket_udp.sendto(mensagem.encode('utf-8'), id_par)
 #----------------------------------------------------------------------------------------
 
 #-Transf. via TCP, o result. do process. e arquivo de saida (se houver) para um par------
