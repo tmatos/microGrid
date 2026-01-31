@@ -10,7 +10,7 @@ import time
 import os
 import sys
 
-from Job import *
+from job import Job
 from definicoes import PORTA_UDP, PORTA_UDP_PAR, PORTA_TCP, PORTA_TCP_PAR
 from util import exibir_ajuda_geral_de_comandos
 
