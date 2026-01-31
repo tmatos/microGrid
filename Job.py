@@ -207,3 +207,12 @@ class Job:
                 break
         lock.release()   ### Fim de secao critica ###
         return valor
+
+    def print_status(self):
+        """
+        Imprime em stdout o estado do job.
+        """
+        lock.acquire()  ### Inicio de secao critica ###
+        for parte in self.lista_partes:
+            print('#', parte.entrada, '-', parte.estado)
+        lock.release()  ### Fim de secao critica ###

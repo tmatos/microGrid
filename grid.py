@@ -388,8 +388,7 @@ def trata_comando(string_comando):
         if job is None:
             print('Sem job carregado.')
         else:
-            for parte in job.lista_partes:
-                print('#', parte.entrada, '-', parte.estado)
+            job.print_status()
     elif comando[0] == 'executa':
         executa_job()
     elif comando[0] == 'sair':
