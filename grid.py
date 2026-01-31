@@ -539,11 +539,11 @@ def conexao_tcp_thread(con, par):
         try:
             print(f'\nIniciando execucao do programa {programa}')
             call(['./programs/' + programa, diretorio_entrada + nome_entrada, diretorio_saida + nome_saida])
-            resposta = 'pronto'
+            #resposta = 'pronto'
         except Exception as ex:
             print(f'\nERRO na execucao do programa {programa}')
             print(ex)
-            resposta = 'erro'
+            #resposta = 'erro'
         envia_saida(nome_diretorio_job, nome_saida, par)
     else:
         while resp:
