@@ -191,7 +191,9 @@ def envia_entrada(entrada, par):
     tamanho = os.path.getsize(arquivo)
     buff = 1024
     tcp_socket = socket(AF_INET, SOCK_STREAM)
-    cabecalho = 'entrada|' + job.diretorio + '|' + entrada + '|' + str(tamanho) + '|' # entrada|diretorio_job|nome_entrada|tamanho|
+
+    #formato: entrada|diretorio_job|nome_entrada|tamanho|
+    cabecalho = 'entrada|' + job.diretorio + '|' + entrada + '|' + str(tamanho) + '|'
 
     # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
     # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
@@ -362,7 +364,8 @@ def trata_comando(string_comando):
     elif comando[0] == 'pares':
         i = 0
         for par in lista_pares:
-            print('#', i, ' - ', str(par), ' - Ocup.:', job.is_par_ocupado(par) if job is not None else False)
+            print('#', i, ' - ', str(par),
+                  ' - Ocup.:', job.is_par_ocupado(par) if job is not None else False)
             i = i + 1
         if i == 0:
             print('Sem pares contactados.')
@@ -416,7 +419,9 @@ def envia_saida(diretorio, saida, par):
     tamanho = os.path.getsize(arquivo)
     buff = 1024
     tcp_socket = socket(AF_INET, SOCK_STREAM)
-    cabecalho = 'saida|' + diretorio + '|' + saida + '|' + str(tamanho) + '|' # saida|diretorio_job|nome_saida|tamanho|
+
+    #formato: saida|diretorio_job|nome_saida|tamanho|
+    cabecalho = 'saida|' + diretorio + '|' + saida + '|' + str(tamanho) + '|'
 
     # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
     # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
@@ -505,7 +510,8 @@ def conexao_tcp_thread(con, par):
             if not resp:
                 break
 
-        print('\nFECHANDO ARQUIVO: ', diretorio_entrada + nome_entrada, ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
+        print('\nFECHANDO ARQUIVO: ', diretorio_entrada + nome_entrada,
+              ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
         file.close()
     elif comando == 'saida':   # Formato: saida|diretorio_job|nome_saida|tamanho|
         nome_diretorio = cabecalho[1]
@@ -523,13 +529,16 @@ def conexao_tcp_thread(con, par):
             if not resp:
                 break
 
-        print('\nFECHANDO ARQUIVO ', diretorio_saida + nome_saida, ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
+        print('\nFECHANDO ARQUIVO ', diretorio_saida + nome_saida,
+              ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
         file.close()
 
-        # esta parte eh muito importante, nela mudamos o estado de uma tarefa concorrentemente
+        # esta parte eh muito importante, nela
+        # mudamos o estado de uma tarefa concorrentemente
         if job.diretorio == nome_diretorio:
             job.finaliza_parte(nome_saida, par)
-    elif comando == 'executa':  # Formato da msg: executa|programa|diretorio_job|nome_entrada|remetente
+    elif comando == 'executa':
+        # Formato da msg: executa|programa|diretorio_job|nome_entrada|remetente
         programa = cabecalho[1]
         nome_diretorio_job = cabecalho[2]
         diretorio_entrada = './temp/' + nome_diretorio_job + '/entrada/'
@@ -538,7 +547,9 @@ def conexao_tcp_thread(con, par):
         nome_saida = nome_entrada[0:-3] + '.out'
         try:
             print(f'\nIniciando execucao do programa {programa}')
-            call(['./programs/' + programa, diretorio_entrada + nome_entrada, diretorio_saida + nome_saida])
+            call(['./programs/' + programa,
+                 diretorio_entrada + nome_entrada,
+                 diretorio_saida + nome_saida])
             #resposta = 'pronto'
         except Exception as ex:
             print(f'\nERRO na execucao do programa {programa}')

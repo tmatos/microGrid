@@ -141,7 +141,8 @@ class Job:
             print('ERRO: Par ', par, ' nao participa no job ', self.nome)
             ok = False
         elif parte.estado == COMPLETO:
-            print('NAO pode atribuir a parte ', parte.entrada, ' do job ', self.nome, ' pois ja esta completa.')
+            print('NAO pode atribuir a parte ', parte.entrada,
+                  ' do job ', self.nome, ' pois ja esta completa.')
             ok = False
         elif par in self.lista_par_ocupado:
             print('ERRO: Par ', par, ' ja esta ocupado com uma tarefa')
@@ -184,7 +185,8 @@ class Job:
         """
         lock.acquire()   ### Inicio de secao critica ###
         for parte in self.lista_partes:
-            if parte.entrada[:-3] == nome_saida[:-4]:  # correspondencia entre os nomes sem as extensoes
+            # correspondencia entre os nomes sem as extensoes
+            if parte.entrada[:-3] == nome_saida[:-4]:
                 # se a parte ja estiver completa, apenas passamos
                 if parte.is_branco():
                     parte.set_completo(nome_saida)
