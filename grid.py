@@ -108,7 +108,7 @@ def contacta_pares():
     Tenta contactar pares listados no arquivo 'peerlist'.
     """
     try:
-        arquivo_pares = [line.strip() for line in open('peerlist')]
+        arquivo_pares = [line.strip() for line in open('peerlist', encoding='utf-8')]
     except Exception as ex:
         print('Erro ao acessar o arquivo peerlist!')
         print(ex)
@@ -128,7 +128,7 @@ def enviar_arquivo(par, arquivo):
     """
     tcp_socket = socket(AF_INET, SOCK_STREAM)
     tcp_socket.connect((par[0], PORTA_TCP_PAR))
-    file = open (arquivo, 'rb')
+    file = open(arquivo, 'rb', encoding='utf-8')
     buff = 1024
     arquivo = arquivo.replace('\\', '/')
     nome = arquivo.split('/')[-1]
@@ -182,7 +182,7 @@ def envia_entrada(entrada, par):
     arquivo = './jobs/' + job.diretorio + '/entrada/' + entrada
 
     try:
-        file = open(arquivo, 'rb')
+        file = open(arquivo, 'rb', encoding='utf-8')
     except Exception as ex:
         print('ERRO ao acessar o arquivo de entrada ', arquivo)
         print(ex)
@@ -304,7 +304,7 @@ def carrega_job(nome_arquivo):
     arquivo_job = []
 
     try:
-        for line in open('jobs/' + nome_arquivo):
+        for line in open('jobs/' + nome_arquivo, encoding='utf-8'):
             entrada = line.strip()
             if len(entrada) > 0:
                 if entrada[0] != '#':
@@ -410,7 +410,7 @@ def envia_saida(diretorio, saida, par):
     arquivo = './temp/' + diretorio + '/saida/' + saida
 
     try:
-        file = open(arquivo, 'rb')
+        file = open(arquivo, 'rb', encoding='utf-8')
     except Exception as ex:
         print(f'\nERRO ao acessar o arquivo de saida {arquivo}')
         print(ex)
@@ -467,7 +467,7 @@ def conexao_tcp_thread(con, par):
     if comando == 'envio':
         nome = cabecalho[1]
         tamanho = int(cabecalho[2])
-        file = open('./recebidos/' + nome, 'wb+')
+        file = open('./recebidos/' + nome, 'wb+', encoding='utf-8')
         recebidos = 0
         while recebidos < tamanho:
             resp = con.recv(buff)
@@ -499,7 +499,7 @@ def conexao_tcp_thread(con, par):
         diretorio_entrada = './temp/' + cabecalho[1] + '/entrada/'
         nome_entrada = cabecalho[2]
         tamanho = int(cabecalho[3])
-        file = open(diretorio_entrada + nome_entrada, 'wb+')
+        file = open(diretorio_entrada + nome_entrada, 'wb+', encoding='utf-8')
         recebidos = 0
         while recebidos < tamanho:
             resp = con.recv(buff)
@@ -518,7 +518,7 @@ def conexao_tcp_thread(con, par):
         diretorio_saida = './jobs/' + nome_diretorio + '/saida/'
         nome_saida = cabecalho[2]
         tamanho = int(cabecalho[3])
-        file = open(diretorio_saida + nome_saida, 'wb+')
+        file = open(diretorio_saida + nome_saida, 'wb+', encoding='utf-8')
         recebidos = 0
         while recebidos < tamanho:
             resp = con.recv(buff)
