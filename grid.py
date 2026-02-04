@@ -107,16 +107,20 @@ def contacta_pares():
     """
     Tenta contactar pares listados no arquivo 'peerlist'.
     """
+    linhas_arquivo_pares = []
+
     try:
-        arquivo_pares = [line.strip() for line in open('peerlist', encoding='utf-8')]
-    except Exception as ex:
+        with open('peerlist', encoding='utf-8') as file:
+            linhas_arquivo_pares = [line.strip() for line in file]
+    except OSError as ex:
         print('Erro ao acessar o arquivo peerlist!')
         print(ex)
         return
-    if len(arquivo_pares) == 0:
+
+    if len(linhas_arquivo_pares) == 0:
         print('Arquivo peerlist vazio!')
-    elif len(lista_pares) < len(arquivo_pares) and len(lista_pares) < 3:
-        for endereco_par in arquivo_pares:
+    elif len(lista_pares) < len(linhas_arquivo_pares) and len(lista_pares) < 3:
+        for endereco_par in linhas_arquivo_pares:
             meu_socket_udp.sendto(b'conect', (endereco_par, PORTA_UDP_PAR))  # Send bytes
             print('\nTentando contactar a: ' + endereco_par)
 #----------------------------------------------------------------------------------------
@@ -128,28 +132,27 @@ def enviar_arquivo(par, arquivo):
     """
     tcp_socket = socket(AF_INET, SOCK_STREAM)
     tcp_socket.connect((par[0], PORTA_TCP_PAR))
-    file = open(arquivo, 'rb', encoding='utf-8')
-    buff = 1024
-    arquivo = arquivo.replace('\\', '/')
-    nome = arquivo.split('/')[-1]
-    tamanho = os.path.getsize(arquivo)
-    cabecalho = 'envio|' + nome + '|' + str(tamanho) + '|'
+    with open(arquivo, 'rb', encoding='utf-8') as file:
+        buff = 1024
+        arquivo = arquivo.replace('\\', '/')
+        nome = arquivo.split('/')[-1]
+        tamanho = os.path.getsize(arquivo)
+        cabecalho = 'envio|' + nome + '|' + str(tamanho) + '|'
 
-    # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
-    # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
-    cabecalho += ' ' * (1024 - len(cabecalho))
+        # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
+        # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
+        cabecalho += ' ' * (1024 - len(cabecalho))
 
-    print('ENVIANDO: ', arquivo, ' de ', tamanho)
+        print('ENVIANDO: ', arquivo, ' de ', tamanho)
 
-    tcp_socket.send(cabecalho)
+        tcp_socket.send(cabecalho)
 
-    dados = file.read(buff)
-    while dados:
-        tcp_socket.send(dados)
         dados = file.read(buff)
+        while dados:
+            tcp_socket.send(dados)
+            dados = file.read(buff)
 
-    tcp_socket.close()
-    file.close()
+        tcp_socket.close()
     print('FIM DO ENVIO DE: ', arquivo)
 #----------------------------------------------------------------------------------------
 
@@ -174,50 +177,45 @@ def prepara_job_no_par(par):
 #----------------------------------------------------------------------------------------
 
 #-Transfere via TCP um arquivo de entrada para um par------------------------------------
-def envia_entrada(entrada, par):
+def envia_entrada(entrada : str, par):
     """
     Transfere via TCP um arquivo de entrada para um par.
     """
-    file = None
-    arquivo = './jobs/' + job.diretorio + '/entrada/' + entrada
+    file_path = f"./jobs/{job.diretorio}/entrada/{entrada}"
 
     try:
-        file = open(arquivo, 'rb', encoding='utf-8')
-    except Exception as ex:
-        print('ERRO ao acessar o arquivo de entrada ', arquivo)
+        with open(file_path, 'rb', encoding='utf-8') as file:
+            tamanho = os.path.getsize(file_path)
+            buff = 1024
+            tcp_socket = socket(AF_INET, SOCK_STREAM)
+
+            #formato: entrada|diretorio_job|nome_entrada|tamanho|
+            cabecalho = 'entrada|' + job.diretorio + '|' + entrada + '|' + str(tamanho) + '|'
+
+            # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
+            # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
+            cabecalho += ' ' * (1024 - len(cabecalho))
+
+            try:
+                print('ENVIANDO ENTRADA: ', file_path, ' de ', tamanho)
+                tcp_socket.connect((par[0], PORTA_TCP_PAR))
+                tcp_socket.send(cabecalho)
+                dados = file.read(buff)
+                while dados:
+                    tcp_socket.send(dados)
+                    dados = file.read(buff)
+            except Exception as ex:
+                print('\nHouve um erro na tranf. de um arquivo!')
+                print(ex)
+                return False
+            finally:
+                tcp_socket.close()
+    except OSError as ex:
+        print('ERRO ao acessar o arquivo de entrada ', file_path)
         print(ex)
         return False
 
-    tamanho = os.path.getsize(arquivo)
-    buff = 1024
-    tcp_socket = socket(AF_INET, SOCK_STREAM)
-
-    #formato: entrada|diretorio_job|nome_entrada|tamanho|
-    cabecalho = 'entrada|' + job.diretorio + '|' + entrada + '|' + str(tamanho) + '|'
-
-    # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
-    # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
-    cabecalho += ' ' * (1024 - len(cabecalho))
-
-    try:
-        print('ENVIANDO ENTRADA: ', arquivo, ' de ', tamanho)
-        tcp_socket.connect((par[0], PORTA_TCP_PAR))
-        tcp_socket.send(cabecalho)
-        dados = file.read(buff)
-        while dados:
-            tcp_socket.send(dados)
-            dados = file.read(buff)
-    except Exception as ex:
-        print('\nHouve um erro na tranf. de um arquivo!')
-        print(ex)
-        tcp_socket.close()
-        file.close()
-        return False
-
-    tcp_socket.close()
-    file.close()
-
-    print('FIM DO ENVIO DE: ', arquivo)
+    print('FIM DO ENVIO DE: ', file_path)
     return True
 #----------------------------------------------------------------------------------------
 
@@ -296,7 +294,7 @@ def executa_job():
 #----------------------------------------------------------------------------------------
 
 #-Carrega para a memoria o job descrito pelo arquivo-------------------------------------
-def carrega_job(nome_arquivo):
+def carrega_job(nome_arquivo : str):
     """
     Carrega um job a partir do arquivo especificado.
     """
@@ -304,12 +302,15 @@ def carrega_job(nome_arquivo):
     arquivo_job = []
 
     try:
-        for line in open('jobs/' + nome_arquivo, encoding='utf-8'):
-            entrada = line.strip()
-            if len(entrada) > 0:
-                if entrada[0] != '#':
+        with open('jobs/' + nome_arquivo, encoding='utf-8') as file:
+            if not file:
+                print(f'Arquivo de job {nome_arquivo} nao encontrado.')
+                return
+            for line in file:
+                entrada = line.strip()
+                if len(entrada) > 0 and entrada[0] != '#':
                     arquivo_job.append(entrada)
-    except Exception as ex:
+    except OSError as ex:
         print(f'Erro ao acessar o arquivo de job: {nome_arquivo}')
         print(ex)
         return
@@ -400,54 +401,47 @@ def envia_mensagem(id_par : int, textos : list):
 #----------------------------------------------------------------------------------------
 
 #-Transf. via TCP, o result. do process. e arquivo de saida (se houver) para um par------
-def envia_saida(diretorio, saida, par):
+def envia_saida(diretorio : str, saida : str, par):
     """
     Transfere via TCP resultados sobre o processamento e o arquivo de saida (caso haja)
     gerado por um job para um determinado par.
     """
-    file = None
-
-    arquivo = './temp/' + diretorio + '/saida/' + saida
+    file_path = f"./temp/{diretorio}/saida/{saida}"
 
     try:
-        file = open(arquivo, 'rb', encoding='utf-8')
-    except Exception as ex:
-        print(f'\nERRO ao acessar o arquivo de saida {arquivo}')
+        with open(file_path, 'rb', encoding='utf-8') as file:
+            tamanho = os.path.getsize(file_path)
+            buff = 1024
+            tcp_socket = socket(AF_INET, SOCK_STREAM)
+
+            # formato: saida|diretorio_job|nome_saida|tamanho|
+            cabecalho = f"saida|{diretorio}|{saida}|{str(tamanho)}|"
+
+            # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
+            # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
+            cabecalho += ' ' * (1024 - len(cabecalho))
+
+            print(f"\nENVIANDO SAIDA: {file_path} de {str(tamanho)} bytes")
+
+            tcp_socket.connect((par[0], PORTA_TCP_PAR))
+            try:
+                tcp_socket.send(cabecalho)
+                dados = file.read(buff)
+                while dados:
+                    tcp_socket.send(dados)
+                    dados = file.read(buff)
+            except Exception as ex:
+                print('\nHouve um erro na transf. de um arquivo!')
+                print(ex)
+                tcp_socket.close()
+                return False
+            tcp_socket.close()
+    except OSError as ex:
+        print(f'\nERRO ao acessar o arquivo de saida {file_path}')
         print(ex)
         return False
 
-    tamanho = os.path.getsize(arquivo)
-    buff = 1024
-    tcp_socket = socket(AF_INET, SOCK_STREAM)
-
-    #formato: saida|diretorio_job|nome_saida|tamanho|
-    cabecalho = 'saida|' + diretorio + '|' + saida + '|' + str(tamanho) + '|'
-
-    # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
-    # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
-    cabecalho += ' ' * (1024 - len(cabecalho))
-
-    print(f'\nENVIANDO SAIDA: {arquivo} de {tamanho}')
-
-    tcp_socket.connect((par[0], PORTA_TCP_PAR))
-
-    try:
-        tcp_socket.send(cabecalho)
-        dados = file.read(buff)
-        while dados:
-            tcp_socket.send(dados)
-            dados = file.read(buff)
-    except Exception as ex:
-        print('\nHouve um erro na transf. de um arquivo!')
-        print(ex)
-        tcp_socket.close()
-        file.close()
-        return False
-
-    tcp_socket.close()
-    file.close()
-
-    print(f'\nFIM DO ENVIO DE: {arquivo}')
+    print(f'\nFIM DO ENVIO DE: {file_path}')
     return True
 #----------------------------------------------------------------------------------------
 
@@ -467,22 +461,21 @@ def conexao_tcp_thread(con, par):
     if comando == 'envio':
         nome = cabecalho[1]
         tamanho = int(cabecalho[2])
-        file = open('./recebidos/' + nome, 'wb+', encoding='utf-8')
-        recebidos = 0
-        while recebidos < tamanho:
-            resp = con.recv(buff)
-            while resp:
-                recebidos += len(resp)
-                file.write(resp)
+        with open('./recebidos/' + nome, 'wb+', encoding='utf-8') as file:
+            recebidos = 0
+            while recebidos < tamanho:
                 resp = con.recv(buff)
-            if not resp:
-                break
-        print('\nFECHANDO ARQUVIO', '- RECEBIDOS: ', recebidos)
-        file.close()
+                while resp:
+                    recebidos += len(resp)
+                    file.write(resp)
+                    resp = con.recv(buff)
+                if not resp:
+                    break
+            print('\nFECHANDO ARQUVIO', '- RECEBIDOS: ', recebidos)
+
     elif comando == 'job':
         diretorio_job = './temp/' + cabecalho[1]
         resultado = ''
-
         try:
             if os.path.isdir(diretorio_job):
                 resultado = 'ok'
@@ -493,50 +486,48 @@ def conexao_tcp_thread(con, par):
         except Exception as ex:
             resultado = 'erro'
             print(ex)
-
         con.send(resultado)
+
     elif comando == 'entrada':
         diretorio_entrada = './temp/' + cabecalho[1] + '/entrada/'
         nome_entrada = cabecalho[2]
         tamanho = int(cabecalho[3])
-        file = open(diretorio_entrada + nome_entrada, 'wb+', encoding='utf-8')
-        recebidos = 0
-        while recebidos < tamanho:
-            resp = con.recv(buff)
-            while resp:
-                recebidos += len(resp)
-                file.write(resp)
+        with open(diretorio_entrada + nome_entrada, 'wb+', encoding='utf-8') as file:
+            recebidos = 0
+            while recebidos < tamanho:
                 resp = con.recv(buff)
-            if not resp:
-                break
+                while resp:
+                    recebidos += len(resp)
+                    file.write(resp)
+                    resp = con.recv(buff)
+                if not resp:
+                    break
+            print('\nFECHANDO ARQUIVO: ', diretorio_entrada + nome_entrada,
+                ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
 
-        print('\nFECHANDO ARQUIVO: ', diretorio_entrada + nome_entrada,
-              ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
-        file.close()
     elif comando == 'saida':   # Formato: saida|diretorio_job|nome_saida|tamanho|
         nome_diretorio = cabecalho[1]
         diretorio_saida = './jobs/' + nome_diretorio + '/saida/'
         nome_saida = cabecalho[2]
         tamanho = int(cabecalho[3])
-        file = open(diretorio_saida + nome_saida, 'wb+', encoding='utf-8')
-        recebidos = 0
-        while recebidos < tamanho:
-            resp = con.recv(buff)
-            while resp:
-                recebidos += len(resp)
-                file.write(resp)
+        with open(diretorio_saida + nome_saida, 'wb+', encoding='utf-8') as file:
+            recebidos = 0
+            while recebidos < tamanho:
                 resp = con.recv(buff)
-            if not resp:
-                break
-
-        print('\nFECHANDO ARQUIVO ', diretorio_saida + nome_saida,
-              ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
-        file.close()
+                while resp:
+                    recebidos += len(resp)
+                    file.write(resp)
+                    resp = con.recv(buff)
+                if not resp:
+                    break
+            print('\nFECHANDO ARQUIVO ', diretorio_saida + nome_saida,
+                ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
 
         # esta parte eh muito importante, nela
         # mudamos o estado de uma tarefa concorrentemente
         if job.diretorio == nome_diretorio:
             job.finaliza_parte(nome_saida, par)
+
     elif comando == 'executa':
         # Formato da msg: executa|programa|diretorio_job|nome_entrada|remetente
         programa = cabecalho[1]
