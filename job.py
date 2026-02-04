@@ -98,12 +98,11 @@ class Job:
         Retorna True se todas as partes do job estiverem completas.
         """
         valor = True
-        lock.acquire()   ### Inicio de secao critica ###
-        for parte in self.lista_partes:
-            if parte.estado != COMPLETO:
-                valor = False
-                break
-        lock.release()   ### Fim de secao critica ###
+        with lock:
+            for parte in self.lista_partes:
+                if parte.estado != COMPLETO:
+                    valor = False
+                    break
         return valor
 
     def insere_par(self, par):
@@ -133,36 +132,34 @@ class Job:
         Atribui uma parte do job ao par especificado
         """
         ok = True
-        lock.acquire()   ### Inicio de secao critica ###
-        if parte not in self.lista_partes:
-            print('ERRO: Parte ', parte.entrada, ' nao esta no job ', self.nome)
-            ok = False
-        elif par not in self.lista_pares:
-            print('ERRO: Par ', par, ' nao participa no job ', self.nome)
-            ok = False
-        elif parte.estado == COMPLETO:
-            print('NAO pode atribuir a parte ', parte.entrada,
-                  ' do job ', self.nome, ' pois ja esta completa.')
-            ok = False
-        elif par in self.lista_par_ocupado:
-            print('ERRO: Par ', par, ' ja esta ocupado com uma tarefa')
-            ok = False
-        elif parte.estado == ATRIBUIDO:
-            print('A PARTE ', parte.entrada, ' ja esta com ', parte.par)
-            ok = False
-        # tudo ok, pode encadear
-        if ok:
-            self.lista_partes[self.lista_partes.index(parte)].atribui(par)
-            self.lista_par_ocupado.append(par)
-        lock.release()   ### Fim de secao critica ###
+        with lock:
+            if parte not in self.lista_partes:
+                print('ERRO: Parte ', parte.entrada, ' nao esta no job ', self.nome)
+                ok = False
+            elif par not in self.lista_pares:
+                print('ERRO: Par ', par, ' nao participa no job ', self.nome)
+                ok = False
+            elif parte.estado == COMPLETO:
+                print('NAO pode atribuir a parte ', parte.entrada,
+                    ' do job ', self.nome, ' pois ja esta completa.')
+                ok = False
+            elif par in self.lista_par_ocupado:
+                print('ERRO: Par ', par, ' ja esta ocupado com uma tarefa')
+                ok = False
+            elif parte.estado == ATRIBUIDO:
+                print('A PARTE ', parte.entrada, ' ja esta com ', parte.par)
+                ok = False
+            # tudo ok, pode encadear
+            if ok:
+                self.lista_partes[self.lista_partes.index(parte)].atribui(par)
+                self.lista_par_ocupado.append(par)
 
     def possui_par_livre(self):
         """
         Retorna True se houver algum par livre para receber uma parte.
         """
-        lock.acquire()   ### Inicio de secao critica ###
-        retorno = len(self.lista_par_ocupado) < len(self.lista_pares)
-        lock.release()   ### Fim de secao critica ###
+        with lock:
+            retorno = len(self.lista_par_ocupado) < len(self.lista_pares)
         return retorno
 
     def proximo_par_livre(self):
@@ -170,12 +167,11 @@ class Job:
         Retorna o proximo par livre para receber uma parte.
         """
         par_retorno = None
-        lock.acquire()   ### Inicio de secao critica ###
-        for par in self.lista_pares:
-            if par not in self.lista_par_ocupado:
-                par_retorno = par
-                break
-        lock.release()   ### Fim de secao critica ###
+        with lock:
+            for par in self.lista_pares:
+                if par not in self.lista_par_ocupado:
+                    par_retorno = par
+                    break
         return par_retorno
 
     def finaliza_parte(self, nome_saida, par):
@@ -183,38 +179,35 @@ class Job:
         Muda para COMPLETO o estado da parte que esta relacionada a nomeSaida
         e também retira da listaParOcupado aquele que estiver com essa parte (se existir).
         """
-        lock.acquire()   ### Inicio de secao critica ###
-        for parte in self.lista_partes:
-            # correspondencia entre os nomes sem as extensoes
-            if parte.entrada[:-3] == nome_saida[:-4]:
-                # se a parte ja estiver completa, apenas passamos
-                if parte.is_branco():
-                    parte.set_completo(nome_saida)
-                elif parte.is_atribuido():
-                    for par_ocupado in self.lista_par_ocupado:
-                        if par_ocupado[0] == par[0]:
-                            self.lista_par_ocupado.remove(par_ocupado)
-                    parte.set_completo(nome_saida)
-        lock.release()   ### Fim de secao critica ###
+        with lock:
+            for parte in self.lista_partes:
+                # correspondencia entre os nomes sem as extensoes
+                if parte.entrada[:-3] == nome_saida[:-4]:
+                    # se a parte ja estiver completa, apenas passamos
+                    if parte.is_branco():
+                        parte.set_completo(nome_saida)
+                    elif parte.is_atribuido():
+                        for par_ocupado in self.lista_par_ocupado:
+                            if par_ocupado[0] == par[0]:
+                                self.lista_par_ocupado.remove(par_ocupado)
+                        parte.set_completo(nome_saida)
 
     def is_par_ocupado(self, par):
         """
         Retorna True se um dado par está ocupado em alguma parte do job.
         """
         valor = False
-        lock.acquire()   ### Inicio de secao critica ###
-        for par_ocupado in self.lista_par_ocupado:
-            if par_ocupado[0] == par[0]:
-                valor = True
-                break
-        lock.release()   ### Fim de secao critica ###
+        with lock:
+            for par_ocupado in self.lista_par_ocupado:
+                if par_ocupado[0] == par[0]:
+                    valor = True
+                    break
         return valor
 
     def print_status(self):
         """
         Imprime em stdout o estado do job.
         """
-        lock.acquire()  ### Inicio de secao critica ###
-        for parte in self.lista_partes:
-            print('#', parte.entrada, '-', parte.estado)
-        lock.release()  ### Fim de secao critica ###
+        with lock:
+            for parte in self.lista_partes:
+                print('#', parte.entrada, '-', parte.estado)
