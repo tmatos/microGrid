@@ -61,10 +61,9 @@ def processa_pacote(msg_com_dados, endereco_par):
     resposta = 'void'
     if msg[0] == 'ok':
         if msg[1] == 'contact':
-            if len(lista_pares) < MAX_DE_PARES:
-                if endereco_par not in lista_pares:
-                    lista_pares.append(endereco_par)
-                    print(f'\nNosso pedido de contato foi aceito por {str(endereco_par)}')
+            if len(lista_pares) < MAX_DE_PARES and endereco_par not in lista_pares:
+                lista_pares.append(endereco_par)
+                print(f'\nNosso pedido de contato foi aceito por {str(endereco_par)}')
             else:
                 resposta = 'disconect'
     elif msg[0] == 'conect':
