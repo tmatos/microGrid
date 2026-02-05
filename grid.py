@@ -53,6 +53,49 @@ def encerrar_programa():
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
+def processa_pacote_ok(msg : list, endereco_par : int) -> str:
+    """
+    Processa um pacote UDP do tipo 'ok' recebido de um par.
+    """
+    resposta = 'void'
+    if msg[1] == 'contact':
+        if len(lista_pares) < MAX_DE_PARES and endereco_par not in lista_pares:
+            lista_pares.append(endereco_par)
+            print(f'\nNosso pedido de contato foi aceito por {str(endereco_par)}')
+        else:
+            resposta = 'disconect'
+    return resposta
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def processa_pacote_conect(endereco_par : int) -> str:
+    """
+    Processa um pacote UDP do tipo 'conect' recebido de um par.
+    """
+    resposta = 'void'
+    if len(lista_pares) < MAX_DE_PARES:
+        if endereco_par not in lista_pares:
+            lista_pares.append(endereco_par)
+        resposta = 'ok;contact'
+        print(f'\nPedido de contato aceito originado de {str(endereco_par)}')
+    else:
+        resposta = 'not'
+    return resposta
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def processa_pacote_disconect(endereco_par : int):
+    """
+    Processa um pacote UDP do tipo 'disconect' recebido de um par.
+    """
+    if endereco_par in lista_pares:
+        lista_pares.remove(endereco_par)
+        print(f'Contato desfeito por solicitacao de {str(endereco_par)}')
+    else:
+        print(f'Recebi disconect de {str(endereco_par)}, ele nao constava conectado.')
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
 def processa_pacote(msg_com_dados, endereco_par):
     """
     Processa um pacote UDP recebido de um par.
@@ -60,24 +103,11 @@ def processa_pacote(msg_com_dados, endereco_par):
     msg = msg_com_dados.decode('utf-8').split(';')  # Decode bytes to string
     resposta = 'void'
     if msg[0] == 'ok':
-        if msg[1] == 'contact':
-            if len(lista_pares) < MAX_DE_PARES and endereco_par not in lista_pares:
-                lista_pares.append(endereco_par)
-                print(f'\nNosso pedido de contato foi aceito por {str(endereco_par)}')
-            else:
-                resposta = 'disconect'
+        resposta = processa_pacote_ok(msg, endereco_par)
     elif msg[0] == 'conect':
-        if len(lista_pares) < MAX_DE_PARES:
-            if endereco_par not in lista_pares:
-                lista_pares.append(endereco_par)
-            resposta = 'ok;contact'
-            print(f'\nPedido de contato aceito originado de {str(endereco_par)}')
-        else:
-            resposta = 'not'
+        resposta = processa_pacote_conect(endereco_par)
     elif msg[0] == 'disconect':
-        if endereco_par in lista_pares:
-            lista_pares.remove(endereco_par)
-            print(f'Contato desfeito por solicitacao de {str(endereco_par)}')
+        processa_pacote_disconect(endereco_par)
     elif endereco_par in lista_pares:
         if msg[0] == 'do':
             resposta = 'what?'
