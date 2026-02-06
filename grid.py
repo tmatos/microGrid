@@ -281,7 +281,7 @@ def executa_parte_no_par(parte, par):
     tcp_socket.close()
 #----------------------------------------------------------------------------------------
 
-#-Thread que cuida da divisao e execucao das partes do job nos pares---------------------
+#----------------------------------------------------------------------------------------
 def job_thread():
     """
     Thread que cuida da divisao e execucao das partes do job nos pares.
@@ -341,7 +341,7 @@ def executa_job():
 #-Carrega para a memoria o job descrito pelo arquivo-------------------------------------
 def carrega_job(nome_arquivo : str):
     """
-    Carrega um job a partir do arquivo especificado.
+    Carrega um job a partir de um arquivo .job especificado.
     """
     global job
     arquivo_job = []
@@ -556,6 +556,44 @@ def trata_comando_tcp_envio(con, nome : str, tamanho : int):
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
+def trata_comando_tcp_job(con, diretorio_job : str):
+    """
+    Recebe o comando de algum um par para ficar preparado a receber um novo job.
+    """
+    resultado = ''
+    try:
+        if not os.path.isdir(diretorio_job):
+            os.makedirs(diretorio_job + '/entrada')
+            os.makedirs(diretorio_job + '/saida')
+        resultado = 'ok'
+    except Exception as ex:
+        resultado = 'erro'
+        print(ex)
+    con.send(resultado)
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def trata_comando_tcp_entrada(con, dir_entrada, nome_entrada, tamanho):
+    """
+    Trata a recepcao de arquivo de entrada via TCP oriundo de um outro par.
+    """
+    buff = 1024
+    file_path = dir_entrada + nome_entrada
+    with open(file_path, 'wb+', encoding='utf-8') as file:
+        recebidos = 0
+        while recebidos < tamanho:
+            resp = con.recv(buff)
+            while resp:
+                recebidos += len(resp)
+                file.write(resp)
+                resp = con.recv(buff)
+            if not resp:
+                break
+        print('\nFECHANDO ARQUIVO: ', file_path,
+              ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
 def conexao_tcp_thread(con, par):
     """
     Thread que cuida de uma conexao TCP criada pela interacao com um par.
@@ -573,33 +611,13 @@ def conexao_tcp_thread(con, par):
 
     elif comando == 'job':
         diretorio_job = f"./temp/{cabecalho[1]}"
-        resultado = ''
-        try:
-            if not os.path.isdir(diretorio_job):
-                os.makedirs(diretorio_job + '/entrada')
-                os.makedirs(diretorio_job + '/saida')
-            resultado = 'ok'
-        except Exception as ex:
-            resultado = 'erro'
-            print(ex)
-        con.send(resultado)
+        trata_comando_tcp_job(con, diretorio_job)
 
     elif comando == 'entrada':
-        diretorio_entrada = './temp/' + cabecalho[1] + '/entrada/'
+        dir_entrada = f"./temp/{cabecalho[1]}/entrada/"
         nome_entrada = cabecalho[2]
         tamanho = int(cabecalho[3])
-        with open(diretorio_entrada + nome_entrada, 'wb+', encoding='utf-8') as file:
-            recebidos = 0
-            while recebidos < tamanho:
-                resp = con.recv(buff)
-                while resp:
-                    recebidos += len(resp)
-                    file.write(resp)
-                    resp = con.recv(buff)
-                if not resp:
-                    break
-            print('\nFECHANDO ARQUIVO: ', diretorio_entrada + nome_entrada,
-                ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
+        trata_comando_tcp_entrada(con, dir_entrada, nome_entrada, tamanho)
 
     elif comando == 'saida':   # Formato: saida|diretorio_job|nome_saida|tamanho|
         nome_diretorio = cabecalho[1]
