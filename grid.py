@@ -527,24 +527,41 @@ def envia_saida(diretorio : str, saida : str, par):
                 tcp_socket.close()
                 return False
             tcp_socket.close()
-    except OSError as ex:
+    except OSError as ex_os_error:
         print(f'\nERRO ao acessar o arquivo de saida {file_path}')
-        print(ex)
+        print(ex_os_error)
         return False
 
     print(f'\nFIM DO ENVIO DE: {file_path}')
     return True
 #----------------------------------------------------------------------------------------
 
-#-Thread da conexao criada numa interacao com um par-------------------------------------
-def conexao_tcp_thread(con, par):
+#----------------------------------------------------------------------------------------
+def trata_comando_tcp_envio(con, nome : str, tamanho : int):
     """
-    Thread que cuida de uma conexao TCP com um par.
+    Trata a recepcao de arquivo via TCP oriundo de um outro par.
     """
     buff = 1024
-    resp = con.recv(buff)
-    #print ''
-    #print 'TCP>', r[:200] ####### DBG
+    with open(f'./recebidos/{nome}', 'wb+', encoding='utf-8') as file:
+        recebidos = 0
+        while recebidos < tamanho:
+            resp = con.recv(buff)
+            while resp:
+                recebidos += len(resp)
+                file.write(resp)
+                resp = con.recv(buff)
+            if not resp:
+                break
+        print('\nFECHANDO ARQUVIO', '- RECEBIDOS: ', recebidos, ' bytes,')
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def conexao_tcp_thread(con, par):
+    """
+    Thread que cuida de uma conexao TCP criada pela interacao com um par.
+    """
+    buff = 1024
+    resp = con.recv(buff).decode('utf-8')
 
     cabecalho = resp.split('|')
     comando = cabecalho[0]
@@ -552,28 +569,16 @@ def conexao_tcp_thread(con, par):
     if comando == 'envio':
         nome = cabecalho[1]
         tamanho = int(cabecalho[2])
-        with open('./recebidos/' + nome, 'wb+', encoding='utf-8') as file:
-            recebidos = 0
-            while recebidos < tamanho:
-                resp = con.recv(buff)
-                while resp:
-                    recebidos += len(resp)
-                    file.write(resp)
-                    resp = con.recv(buff)
-                if not resp:
-                    break
-            print('\nFECHANDO ARQUVIO', '- RECEBIDOS: ', recebidos)
+        trata_comando_tcp_envio(con, nome, tamanho)
 
     elif comando == 'job':
-        diretorio_job = './temp/' + cabecalho[1]
+        diretorio_job = f"./temp/{cabecalho[1]}"
         resultado = ''
         try:
-            if os.path.isdir(diretorio_job):
-                resultado = 'ok'
-            else:
+            if not os.path.isdir(diretorio_job):
                 os.makedirs(diretorio_job + '/entrada')
                 os.makedirs(diretorio_job + '/saida')
-                resultado = 'ok'
+            resultado = 'ok'
         except Exception as ex:
             resultado = 'erro'
             print(ex)
@@ -612,7 +617,7 @@ def conexao_tcp_thread(con, par):
                 if not resp:
                     break
             print('\nFECHANDO ARQUIVO ', diretorio_saida + nome_saida,
-                ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
+                  ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
 
         # esta parte eh muito importante, nela
         # mudamos o estado de uma tarefa concorrentemente
@@ -623,8 +628,8 @@ def conexao_tcp_thread(con, par):
         # Formato da msg: executa|programa|diretorio_job|nome_entrada|remetente
         programa = cabecalho[1]
         nome_diretorio_job = cabecalho[2]
-        diretorio_entrada = './temp/' + nome_diretorio_job + '/entrada/'
-        diretorio_saida = './temp/' + nome_diretorio_job + '/saida/'
+        diretorio_entrada = f'./temp/{nome_diretorio_job}/entrada/'
+        diretorio_saida = f'./temp/{nome_diretorio_job}/saida/'
         nome_entrada = cabecalho[3]
         nome_saida = nome_entrada[0:-3] + '.out'
         try:
@@ -638,6 +643,7 @@ def conexao_tcp_thread(con, par):
             print(ex)
             #resposta = 'erro'
         envia_saida(nome_diretorio_job, nome_saida, par)
+
     else:
         while resp:
             resp = con.recv(buff)
