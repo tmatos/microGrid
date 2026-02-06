@@ -371,8 +371,84 @@ def carrega_job(nome_arquivo : str):
     job = Job(arquivo_job[0], arquivo_job[1], arquivo_job[2], nome_arquivo)
 #----------------------------------------------------------------------------------------
 
-#-Interpretacao dos comandos do prompt---------------------------------------------------
-def trata_comando(string_comando):
+def executa_comando_mensagem(comando : list):
+    """
+    Executa o comando de envio de mensagem para um par.
+    """
+    if len(comando) < 3:
+        print('\nArgumentos incorretos no comando.')
+        return
+    try:
+        id_par = int(comando[1])
+        if id_par < 0:
+            raise ValueError
+    except ValueError:
+        print('\nArgumentos incorretos no comando. ',
+              'O id do par deve ser numero inteiro nao negativo.')
+        return
+    envia_mensagem(id_par, comando[2:])
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def executa_comando_enviar(comando : list):
+    """
+    Executa o comando de envio arquivo para um par.
+    """
+    if len(comando) < 3:
+        print('\nArgumentos incorretos no comando.')
+        return
+    try:
+        id_par = int(comando[1])
+        if id_par < 0:
+            raise ValueError
+    except ValueError:
+        print('\nArgumentos incorretos no comando. ',
+              'O id do par deve ser numero inteiro nao negativo.')
+        return
+    if id_par+1 > len(lista_pares):
+        print('\nNao temos este par na nossa lista.')
+        return
+    enviar_arquivo(lista_pares[id_par], comando[2])
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def executa_comando_pares():
+    """
+    Executa o comando de listar pares contactados.
+    """
+    i = 0
+    for par in lista_pares:
+        print('#', i, ' - ', str(par),
+              ' - Ocup.:', job.is_par_ocupado(par) if job is not None else False)
+        i = i + 1
+    if i == 0:
+        print('Sem pares contactados.')
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def executa_comando_carrega(comando : list):
+    """
+    Executa o comando de carregar um job.
+    """
+    if len(comando) < 2:
+        print('\nArgumentos incorretos. Especifique o arquivo do job.')
+        return
+    carrega_job(comando[1])
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def executa_comando_estado():
+    """
+    Executa o comando de exibir o estado do job.
+    """
+    if job is None:
+        print('Sem job carregado.')
+    else:
+        job.print_status()
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
+def trata_comando(string_comando : str):
     """
     Interpreta e executa os comandos digitados no prompt.
     """
@@ -386,45 +462,15 @@ def trata_comando(string_comando):
     elif comando[0] == 'contato':
         contacta_pares()
     elif comando[0] == 'mensagem':
-        if len(comando) < 3:
-            print('\nArgumentos incorretos no comando.')
-        else:
-            try:
-                id_par = int(comando[1])
-            except ValueError:
-                print('\nArgumentos incorretos no comando. Id do par deve ser numero.')
-                return
-            envia_mensagem(id_par, comando[2:])
+        executa_comando_mensagem(comando)
     elif comando[0] == 'enviar':
-        if len(comando) < 3:
-            print('\nArgumentos incorretos no comando.')
-        else:
-            try:
-                id_par = int(comando[1])
-            except ValueError:
-                print('\nArgumentos incorretos no comando. Id do par deve ser numero.')
-                return
-            if id_par < 0 or id_par+1 > len(lista_pares):
-                print('\nNao temos este par na nossa lista.')
-            enviar_arquivo(lista_pares[id_par], comando[2])
+        executa_comando_enviar(comando)
     elif comando[0] == 'pares':
-        i = 0
-        for par in lista_pares:
-            print('#', i, ' - ', str(par),
-                  ' - Ocup.:', job.is_par_ocupado(par) if job is not None else False)
-            i = i + 1
-        if i == 0:
-            print('Sem pares contactados.')
+        executa_comando_pares()
     elif comando[0] == 'carrega':
-        if len(comando) < 2:
-            print('\nArgumentos incorretos. Especifique o arquivo do job.')
-            return
-        carrega_job(comando[1])
+        executa_comando_carrega(comando)
     elif comando[0] == 'estado':
-        if job is None:
-            print('Sem job carregado.')
-        else:
-            job.print_status()
+        executa_comando_estado()
     elif comando[0] == 'executa':
         executa_job()
     elif comando[0] == 'sair':
