@@ -114,12 +114,12 @@ def processa_pacote(msg_com_dados, endereco_par):
             if len(msg) > 3:
                 if msg[1] == 'cmd':
                     try:
-                        call(['./programs/' + msg[2], msg[3]])
+                        call([f"./programs/{msg[2]}", msg[3]])
                         resposta = 'done cmd'
                     except Exception:  # Changed to catch all exceptions
                         resposta = 'erro cmd'
         elif msg[0] == 'msg':
-            msg_print = 'Msg. de ' + str(endereco_par) + ' : '
+            msg_print = f"Msg. de {str(endereco_par)} : "
             if len(msg) > 1:
                 msg_print += msg[1]
             print('')
@@ -129,7 +129,7 @@ def processa_pacote(msg_com_dados, endereco_par):
         resposta = 'not'
 
     if resposta != 'void':
-        meu_socket_udp.sendto(resposta.encode('utf-8'), endereco_par)  # Encode string to bytes
+        meu_socket_udp.sendto(resposta.encode('utf-8'), endereco_par) # Encode string to bytes
         #print('')
         #print('Enviei: ', resposta, '  Para: ', str(enderecoPar))
 #----------------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ def contacta_pares():
     elif len(lista_pares) < len(linhas_arquivo_pares) and len(lista_pares) < 3:
         for endereco_par in linhas_arquivo_pares:
             meu_socket_udp.sendto(b'conect', (endereco_par, PORTA_UDP_PAR))  # Send bytes
-            print('\nTentando contactar a: ' + endereco_par)
+            print(f'\nTentando contactar a: {endereco_par}')
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
@@ -182,7 +182,7 @@ def enviar_arquivo(par, arquivo):
         arquivo = arquivo.replace('\\', '/')
         nome = arquivo.split('/')[-1]
         tamanho = os.path.getsize(arquivo)
-        cabecalho = 'envio|' + nome + '|' + str(tamanho) + '|'
+        cabecalho = f"envio|{nome}|{str(tamanho)}|"
 
         # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
         # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
@@ -208,20 +208,21 @@ def prepara_job_no_par(par):
     """
     tcp_socket = socket(AF_INET, SOCK_STREAM)
     tcp_socket.connect((par[0], PORTA_TCP_PAR))
-    tcp_socket.sendall(f'job|{job.diretorio}|'.encode('utf-8'))
+    tcp_socket.sendall(f"job|{job.diretorio}|".encode('utf-8'))
     buff = 1024
     print('')
     resp = tcp_socket.recv(buff).decode('utf-8')
     if resp == 'ok':
-        print(f'PAR {par[0]} esta preparado para o job {job.nome}')
+        print(f"PAR {par[0]} esta preparado para o job {job.nome}")
         job.insere_par(par)
     else:
-        print(f'PAR {par[0]} nao pode preparar (ou nao e possivel confirmar) para o job {job.nome}')
+        print(f"PAR {par[0]} nao pode preparar (ou nao e possivel confirmar este fato) ",
+              f"para o job {job.nome}.")
         job.remove_par(par)
     tcp_socket.close()
 #----------------------------------------------------------------------------------------
 
-#-Transfere via TCP um arquivo de entrada para um par------------------------------------
+#----------------------------------------------------------------------------------------
 def envia_entrada(entrada : str, par):
     """
     Transfere via TCP um arquivo de entrada para um par.
@@ -235,7 +236,7 @@ def envia_entrada(entrada : str, par):
             tcp_socket = socket(AF_INET, SOCK_STREAM)
 
             #formato: entrada|diretorio_job|nome_entrada|tamanho|
-            cabecalho = 'entrada|' + job.diretorio + '|' + entrada + '|' + str(tamanho) + '|'
+            cabecalho = f"entrada|{job.diretorio}|{entrada}|{str(tamanho)}|"
 
             # aqui preenchemos o cabecalho com esp. em branco ate ele ficar com tam. do buffer
             # isto e, o cabecalho deve ter buff bytes de tamanho (wrkrnd)
@@ -264,7 +265,7 @@ def envia_entrada(entrada : str, par):
     return True
 #----------------------------------------------------------------------------------------
 
-#-Envia um comando para o par executar uma parte do job----------------------------------
+#----------------------------------------------------------------------------------------
 def executa_parte_no_par(parte, par):
     """
     Envia um comando para o par executar uma parte do job.
@@ -272,7 +273,7 @@ def executa_parte_no_par(parte, par):
     tcp_socket = socket(AF_INET, SOCK_STREAM)
 
     # Formato: executa|programa|diretorio_job|nome_entrada|
-    msg = 'executa|' + job.programa + '|' + job.diretorio + '|' + parte.entrada + '|'
+    msg = f"executa|{job.programa}|{job.diretorio}|{parte.entrada}|"
 
     print('EXECUTANDO: ', job.programa, ' sobre a entrada ', parte.entrada, ' em ', par)
 
@@ -328,7 +329,7 @@ def executa_job():
         print('\nJob sem tarefas.')
         return
     if job.finalizado():
-        print(f'\nTodas as tarefas do job \'{job.nome}\' foram completas.')
+        print(f"\nTodas as tarefas do job \'{job.nome}\' foram completas.")
         return
 
     for parte in job.lista_partes:
@@ -347,7 +348,7 @@ def carrega_job(nome_arquivo : str):
     arquivo_job = []
 
     try:
-        with open('jobs/' + nome_arquivo, encoding='utf-8') as file:
+        with open(f"jobs/{nome_arquivo}", encoding='utf-8') as file:
             if not file:
                 print(f'Arquivo de job {nome_arquivo} nao encontrado.')
                 return
@@ -621,7 +622,7 @@ def conexao_tcp_thread(con, par):
 
     elif comando == 'saida':   # Formato: saida|diretorio_job|nome_saida|tamanho|
         nome_diretorio = cabecalho[1]
-        diretorio_saida = './jobs/' + nome_diretorio + '/saida/'
+        diretorio_saida = f"./jobs/{nome_diretorio}/saida/"
         nome_saida = cabecalho[2]
         tamanho = int(cabecalho[3])
         with open(diretorio_saida + nome_saida, 'wb+', encoding='utf-8') as file:
@@ -652,7 +653,7 @@ def conexao_tcp_thread(con, par):
         nome_saida = nome_entrada[0:-3] + '.out'
         try:
             print(f'\nIniciando execucao do programa {programa}')
-            call(['./programs/' + programa,
+            call([f'./programs/{programa}',
                  diretorio_entrada + nome_entrada,
                  diretorio_saida + nome_saida])
             #resposta = 'pronto'
