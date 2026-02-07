@@ -620,6 +620,29 @@ def trata_comando_tcp_saida(con, par, nome_dir : str, nome_saida : str, tamanho 
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
+def trata_comando_tcp_executa(par, programa, dir_job, nome_entrada, nome_saida):
+    """
+    Trata o comando de execucao de um programa sobre um arquivo de entrada,
+    e ja faz envio de resultado e arquivo de saida ao par que solicitou a execucao.
+    """
+    dir_entrada = f'./temp/{dir_job}/entrada/'
+    dir_saida = f'./temp/{dir_job}/saida/'
+    try:
+        print(f'\nIniciando execucao do programa {programa}')
+        call([f'./programs/{programa}',
+                dir_entrada + nome_entrada,
+                dir_saida + nome_saida])
+        #resposta = 'pronto'
+    except Exception as ex:
+        print(f'\nERRO na execucao do programa {programa}')
+        print(ex)
+        #resposta = 'erro'
+    envia_saida(dir_job, nome_saida, par)
+    # NOTE: avaliar a possibilidade de enviar a conexao 'con' por aqui,
+    #       evitando a necessidade de abrir nova conexao TCP dentro da func acima
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
 def conexao_tcp_thread(con, par):
     """
     Thread que cuida de uma conexao TCP criada pela interacao com um par.
@@ -646,7 +669,7 @@ def conexao_tcp_thread(con, par):
         tamanho = int(cabecalho[3])
         trata_comando_tcp_entrada(con, dir_entrada, nome_entrada, tamanho)
 
-    elif comando == 'saida': 
+    elif comando == 'saida':
         # Formato: saida|diretorio_job|nome_saida|tamanho|
         nome_diretorio = cabecalho[1]
         nome_saida = cabecalho[2]
@@ -656,22 +679,10 @@ def conexao_tcp_thread(con, par):
     elif comando == 'executa':
         # Formato da msg: executa|programa|diretorio_job|nome_entrada|remetente
         programa = cabecalho[1]
-        nome_diretorio_job = cabecalho[2]
-        diretorio_entrada = f'./temp/{nome_diretorio_job}/entrada/'
-        diretorio_saida = f'./temp/{nome_diretorio_job}/saida/'
+        dir_job = cabecalho[2]
         nome_entrada = cabecalho[3]
         nome_saida = nome_entrada[0:-3] + '.out'
-        try:
-            print(f'\nIniciando execucao do programa {programa}')
-            call([f'./programs/{programa}',
-                 diretorio_entrada + nome_entrada,
-                 diretorio_saida + nome_saida])
-            #resposta = 'pronto'
-        except Exception as ex:
-            print(f'\nERRO na execucao do programa {programa}')
-            print(ex)
-            #resposta = 'erro'
-        envia_saida(nome_diretorio_job, nome_saida, par)
+        trata_comando_tcp_executa(par, programa, dir_job, nome_entrada, nome_saida)
 
     else:
         while resp:
