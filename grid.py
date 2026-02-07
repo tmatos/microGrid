@@ -595,6 +595,31 @@ def trata_comando_tcp_entrada(con, dir_entrada, nome_entrada, tamanho):
 #----------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------
+def trata_comando_tcp_saida(con, par, nome_dir : str, nome_saida : str, tamanho : int):
+    """
+    Trata a recepcao de arquivo de saida via TCP oriundo de um outro par.
+    """
+    buff = 1024
+    diretorio_saida = f"./jobs/{nome_dir}/saida/"
+    file_path = diretorio_saida + nome_saida
+    with open(file_path, 'wb+', encoding='utf-8') as file:
+        recebidos = 0
+        while recebidos < tamanho:
+            resp = con.recv(buff)
+            while resp:
+                recebidos += len(resp)
+                file.write(resp)
+                resp = con.recv(buff)
+            if not resp:
+                break
+        print('\nFECHANDO ARQUIVO: ', file_path,
+              ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
+    # esta parte eh muito importante, nela mudamos o estado duma tarefa concorrentemente
+    if job.diretorio == nome_dir:
+        job.finaliza_parte(nome_saida, par)
+#----------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------
 def conexao_tcp_thread(con, par):
     """
     Thread que cuida de uma conexao TCP criada pela interacao com um par.
@@ -615,33 +640,18 @@ def conexao_tcp_thread(con, par):
         trata_comando_tcp_job(con, diretorio_job)
 
     elif comando == 'entrada':
+        # Formato: entrada|diretorio|nome_entrada|tamanho|
         dir_entrada = f"./temp/{cabecalho[1]}/entrada/"
         nome_entrada = cabecalho[2]
         tamanho = int(cabecalho[3])
         trata_comando_tcp_entrada(con, dir_entrada, nome_entrada, tamanho)
 
-    elif comando == 'saida':   # Formato: saida|diretorio_job|nome_saida|tamanho|
+    elif comando == 'saida': 
+        # Formato: saida|diretorio_job|nome_saida|tamanho|
         nome_diretorio = cabecalho[1]
-        diretorio_saida = f"./jobs/{nome_diretorio}/saida/"
         nome_saida = cabecalho[2]
         tamanho = int(cabecalho[3])
-        with open(diretorio_saida + nome_saida, 'wb+', encoding='utf-8') as file:
-            recebidos = 0
-            while recebidos < tamanho:
-                resp = con.recv(buff)
-                while resp:
-                    recebidos += len(resp)
-                    file.write(resp)
-                    resp = con.recv(buff)
-                if not resp:
-                    break
-            print('\nFECHANDO ARQUIVO ', diretorio_saida + nome_saida,
-                  ' - RECEBIDOS: ', recebidos, ' de ', tamanho)
-
-        # esta parte eh muito importante, nela
-        # mudamos o estado de uma tarefa concorrentemente
-        if job.diretorio == nome_diretorio:
-            job.finaliza_parte(nome_saida, par)
+        trata_comando_tcp_saida(con, par, nome_diretorio, nome_saida, tamanho)
 
     elif comando == 'executa':
         # Formato da msg: executa|programa|diretorio_job|nome_entrada|remetente
