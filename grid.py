@@ -37,7 +37,7 @@ meu_socket_udp.bind(('', PORTA_UDP))
 MAX_DE_PARES = 3
 lista_pares = []
 
-job = None
+job = None  # pylint: disable=invalid-name
 
 #----------------------------------------------------------------------------------------
 def encerrar_programa():
@@ -344,7 +344,7 @@ def carrega_job(nome_arquivo : str):
     """
     Carrega um job a partir de um arquivo .job especificado.
     """
-    global job
+    global job  # pylint: disable=global-statement,invalid-name
     arquivo_job = []
 
     try:
