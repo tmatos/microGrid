@@ -116,8 +116,9 @@ def processa_pacote(msg_com_dados, endereco_par):
                     try:
                         call([f"./programs/{msg[2]}", msg[3]])
                         resposta = 'done cmd'
-                    except Exception:  # Changed to catch all exceptions
+                    except Exception as ex:
                         resposta = 'erro cmd'
+                        print(ex)
         elif msg[0] == 'msg':
             msg_print = f"Msg. de {str(endereco_par)} : "
             if len(msg) > 1:
