@@ -19,8 +19,8 @@ Módulo principal do sistema de computacao em grid.
 Contém o ponto de entrada e a lógica principal do programa.
 """
 
+# pylint: disable=fixme,broad-except
 # TODO: better error handling...
-# pylint: disable=broad-except
 
 from subprocess import call
 from socket import socket, AF_INET, SOCK_DGRAM, SOCK_STREAM
