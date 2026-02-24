@@ -376,6 +376,7 @@ def carrega_job(nome_arquivo : str):
     job = Job(arquivo_job[0], arquivo_job[1], arquivo_job[2], nome_arquivo)
 #----------------------------------------------------------------------------------------
 
+#----------------------------------------------------------------------------------------
 def executa_comando_mensagem(comando : list):
     """
     Executa o comando de envio de mensagem para um par.
@@ -709,27 +710,39 @@ def tcp_thread():
 #----------------------------------------------------------------------------------------
 
 #-Inicializacao das threads--------------------------------------------------------------
-try:
-    threading.Thread(target=tcp_thread, args=()).start()
-    threading.Thread(target=recepcao_thread, args=()).start()
-except Exception as ex:
-    print('Problemas com uma thread.')
-    print(ex)
-    meu_socket_udp.close()
-    sys.exit(1)
-
-print('Pronto.')
-print('')
+def start_threads():
+    """
+    Inicializalção da thread atrelada à porta em TCP, de boas vindas e de outra thread,
+    atrelada à uma porta em UDP para recebimento de algumas mensagens.
+    """
+    try:
+        threading.Thread(target=tcp_thread, args=()).start() # for TCP welcome
+        threading.Thread(target=recepcao_thread, args=()).start() # for UDP messaging
+    except Exception as ex:
+        print('Problemas com uma thread.')
+        print(ex)
+        meu_socket_udp.close()
+        sys.exit(1)
+    print('Pronto.')
+    print('')
 #----------------------------------------------------------------------------------------
 
 #-Loop principal, usado para entrada de comandos-----------------------------------------
-while True:
-    try:
-        str_comando = input('Comando: ')
-        trata_comando(str_comando)
-    except KeyboardInterrupt:
-        encerrar_programa()
-    except Exception as ex:
-        print('\nHouve um erro!')
-        print(ex)
+def main_loop():
+    """
+    Loop para leitura, avaliação e execução dos comandos de operação.
+    """
+    while True:
+        try:
+            str_comando = input('Comando: ')
+            trata_comando(str_comando)
+        except KeyboardInterrupt:
+            encerrar_programa()
+        except Exception as ex:
+            print('\nHouve um erro!')
+            print(ex)
 #----------------------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    start_threads()
+    main_loop()
